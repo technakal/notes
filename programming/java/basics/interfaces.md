@@ -8,6 +8,10 @@
   - So, you can't have a subclass that inherits from two or more base classes.
 - Interfaces provide a means of a class inheriting constants and methods from multiple sources.
 - You can inherit from as many interfaces as you need.
+- Interfaces are like a kind of job posting of things that an object must be able to do.
+- Having functionality in an interface, instead of a class, gives us a lot more flexibility.
+  - With an interface, you can have something like Flyable that implements a fly method. Then, this could be implemented in Plane, Bird, Bee, Superman, etc.
+- [Composition over inheritance](https://www.youtube.com/watch?v=wfMtDGfHWpA).
 
 ## What Can an Interface Do?
 
