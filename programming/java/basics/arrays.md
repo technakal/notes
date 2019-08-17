@@ -1,5 +1,15 @@
 # Java Arrays
 
+- [Java Arrays](#java-arrays)
+  - [Overview](#overview)
+  - [Using Arrays](#using-arrays)
+    - [Setting Array Elements](#setting-array-elements)
+    - [Array Iteration](#array-iteration)
+    - [Multi-Dimensional Arrays](#multi-dimensional-arrays)
+  - [Array Challenges](#array-challenges)
+    - [Arrays are Fixed Length](#arrays-are-fixed-length)
+    - [Arrays Don't Have a Built-In Sort Method](#arrays-dont-have-a-built-in-sort-method)
+
 ## Overview
 
 - All elements of an array must be the same data type.

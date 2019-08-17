@@ -1,5 +1,11 @@
 # Regex in Java
 
+- [Regex in Java](#regex-in-java)
+  - [Overview](#overview)
+  - [The Pattern Class](#the-pattern-class)
+  - [The Matcher Class](#the-matcher-class)
+  - [Resources](#resources)
+
 ## Overview
 
 - [abc] - This is called a character class.

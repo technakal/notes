@@ -1,5 +1,15 @@
 # Java Lists
 
+- [Java Lists](#java-lists)
+  - [Overview](#overview)
+  - [Using Lists](#using-lists)
+    - [Declaring and Instantiating Lists](#declaring-and-instantiating-lists)
+    - [Adding Items to Lists](#adding-items-to-lists)
+    - [Removing Items from Lists](#removing-items-from-lists)
+    - [Accessing Items in Lists](#accessing-items-in-lists)
+    - [The Fancy Stuff](#the-fancy-stuff)
+  - [A Note About Sets](#a-note-about-sets)
+
 ## Overview
 
 - To solve the very obvious problem that fixed-length collections only work in some circumstances (like storing the months of the year), Java introduced the Java collections framework in 1998.

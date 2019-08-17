@@ -1,5 +1,13 @@
 # Java Interfaces
 
+- [Java Interfaces](#java-interfaces)
+  - [Overview](#overview)
+  - [Why Use an Interface?](#why-use-an-interface)
+  - [What Can an Interface Do?](#what-can-an-interface-do)
+  - [Using an Interface](#using-an-interface)
+
+## Overview
+
 [What is an interface?](https://docs.oracle.com/javase/tutorial/java/concepts/interface.html) In its most common form, an interface is a group of related methods with empty bodies.
 
 ## Why Use an Interface?

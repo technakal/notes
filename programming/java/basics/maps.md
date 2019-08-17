@@ -1,5 +1,11 @@
 # Java Maps
 
+- [Java Maps](#java-maps)
+  - [Overview](#overview)
+  - [Using Maps](#using-maps)
+    - [Declaring Maps](#declaring-maps)
+    - [Adding Items to Maps](#adding-items-to-maps)
+
 ## Overview
 
 - Maps are data types that allow us to store key-value pairs.
