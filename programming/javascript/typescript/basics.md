@@ -4,22 +4,28 @@
   - [Overview](#overview)
   - [Installing TypeScript](#installing-typescript)
   - [Using TypeScript](#using-typescript)
-    - [Writing TypeScript](#writing-typescript)
-      - [Typing](#typing)
+    - [Typing](#typing)
       - [Custom Types](#custom-types)
-      - [Interfaces](#interfaces)
-      - [Strong-Typing Arrays](#strong-typing-arrays)
-      - [TypeScript Tuples](#typescript-tuples)
-      - [Strong-Typing Functions](#strong-typing-functions)
-      - [Generics](#generics)
-    - [Compilation](#compilation)
+    - [Interfaces](#interfaces)
+    - [Strong-Typing Arrays](#strong-typing-arrays)
+    - [TypeScript Tuples](#typescript-tuples)
+    - [Strong-Typing Functions](#strong-typing-functions)
+    - [Generics](#generics)
+  - [Class-Based Objects](#class-based-objects)
+  - [Compilation](#compilation)
     - [tsconfig](#tsconfig)
-    - [Third-Party Libraries](#third-party-libraries)
+  - [Third-Party Libraries](#third-party-libraries)
   - [Resources](#resources)
 
 ## Overview
 
-TypeScript is a super-script of JavaScript. It has virtually no learning curve for JavaScript developers.
+TypeScript is a superset of JavaScript. It has virtually no learning curve for JavaScript developers.
+
+- Beneifts of TypeScript:
+  - Optional static typing.
+  - Class-based objects.
+  - Modularity.
+  - All ES6+ features.
 
 ## Installing TypeScript
 
@@ -31,13 +37,24 @@ npm i -g typescript
 
 ## Using TypeScript
 
-### Writing TypeScript
-
 - TypeScript files use the .ts extension.
 - TypeScript files are written just like JavaScript, with extra features.
 
-#### Typing
+### Typing
 
+- TypeScript recognizes the following primitive types:
+  - String
+  - Number
+  - Boolean
+  - Array
+  - Any
+  - Void
+  - Null (undefined)
+  - Tuple
+  - Enum
+  - Generics
+- TypeScript also allows you to declare your own [custom types](#custom-types)--like "interfaces".
+  - These describe the shape of an object, typically.
 - To type something, just add a colon and the type.
   - Below, lucky is a type of number now.
 
@@ -76,7 +93,7 @@ let font: Style = 'bold'; // this works.
 let font2: Style = 'big!'; // this is an error because it doesn't match the type we declare.
 ```
 
-#### Interfaces
+### Interfaces
 
 - More often than custom types, you'll use interfaces to enforce the shape of an object.
 
@@ -113,7 +130,7 @@ interface Person {
 }
 ```
 
-#### Strong-Typing Arrays
+### Strong-Typing Arrays
 
 - You can strong type arrays.
   - This is especially useful when using an array of objects because you can then get Intellisense on those objects as you iterate over them in the array. Wowza!
@@ -131,7 +148,14 @@ numArr.push(false); // error!
 const personArr: Person[] = [];
 ```
 
-#### TypeScript Tuples
+- Another method of declaring array types is to use the <> syntax.
+
+```typescript
+const numArr: Array<number> = [];
+const personArr: Array<Person> = [];
+```
+
+### TypeScript Tuples
 
 - TypeScript introduces JavaScript to the world of tuples.
 - Tuples are fixed-length arrays where each item in the array has its own type.
@@ -142,7 +166,7 @@ type MyList = [number, string, boolean];
 const myListArr: MyList = [1, 'red', true];'
 ```
 
-#### Strong-Typing Functions
+### Strong-Typing Functions
 
 - Functions have types for the parameters and the return value.
 
@@ -170,7 +194,7 @@ const sideEffect = (num1: number, num2: number): void => {
 };
 ```
 
-#### Generics
+### Generics
 
 - You can use generics to dynamically assign types within class declarations.
 - I don't really get it, but I think, basically, this means you can pass whatever type you want into the Observable and it will make the resulting class of that type.
@@ -185,7 +209,16 @@ let y: Observable<number>;
 let z = new Observable(23);
 ```
 
-### Compilation
+## Class-Based Objects
+
+- Object-oriented programming.
+- No prototypes.
+- Encapsulation.
+- Inheritance.
+- Access modifiers.
+  - public, private, protected, etc.
+
+## Compilation
 
 - TypeScript requires compilation.
 - The tsc provides this compilation ability.
@@ -210,8 +243,30 @@ tsc spdemo.ts
   - target - tells which version of JavaScript to compile to.
   - watch - Sets up tsc as a watcher.
   - lib - Tells TS which libraries you want it to give Intellisense on.
+- When using a tsconfig.json, you can set up watches so that your code either auto-compiles, or compiles with a simple `tsc` command.
+  - The watches option is handled using the `watch` and `files` flags in tsconfig.
+    - files lists the files for tsc to watch.
+  - To initiate a watch, just type tsc in the terminal.
 
-### Third-Party Libraries
+```json
+// Basic tsconfig.json example
+{
+  "compileOnSave": true,
+  "compilerOptions": {
+    "lib": ["dom", "es2017"],
+    "module": "commonjs",
+    "noImplicitAny": true,
+    "preserveConstEnums": true,
+    "removeComments": true,
+    "sourceMap": true,
+    "target": "esnext",
+    "watch": true
+  },
+  "files": ["types.ts"]
+}
+```
+
+## Third-Party Libraries
 
 - Some libraries don't have native TypeScript documentation.
   - lodash is one example.
