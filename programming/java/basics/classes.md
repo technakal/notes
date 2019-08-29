@@ -11,7 +11,8 @@
 
 - Classes are defined with the `class` keyword.
 - Classes include an access modifier.
-- Every class has a `main()` method.
+- Most Java programs utilize multiple classes, each of which requires its own file.
+- Only one file needs a main() method — this is the file we will run.
 
 ```java
 public class Developer {
