@@ -11,6 +11,11 @@
   - [Search Algorithms](#search-algorithms)
     - [Binary Search](#binary-search)
     - [Recursion](#recursion)
+    - [Big O Notation](#big-o-notation)
+  - [Collections](#collections)
+    - [List](#list)
+      - [ArrayList](#arraylist)
+      - [LinkedList](#linkedlist)
 
 ## Basic Java APIs
 
@@ -168,3 +173,91 @@ public static void permute(int[] arr, int index) {
 - Here are some practice problems. You need to practice.
   - [CodingBat](https://codingbat.com/java/Recursion-1)
   - [GeeksForGeeks](https://www.geeksforgeeks.org/recursion-practice-problems-solutions/)
+- It helps to think about each recursive call, not as a function, but as the return result of that function call.
+  - The recursion builds on itself, and only the after all of the underlying calls have resolved does the initial call resolve:
+
+```java
+// each iteration will either return 1 or 0.
+// the end result will be the sum of all of the recursion call's 1s or 0s, added together.
+public static int array11(int[] nums, int index) {
+  if(index > nums.length - 1) {
+    return 0;
+  }
+  if(nums[index] == 11) {
+    return 1 + array11(nums, index + 1); // this is not 1 + a function. This is 1 + the resolution of that function.
+  }
+  return array11(nums, index + 1);
+}
+```
+
+### [Big O Notation](https://docs.google.com/presentation/d/1ktNwvUV4opYucCr7vu_G-dh96MZ7XuTo0aGB9M5uD-U/edit#slide=id.g5c78fc8d66_0_59)
+
+- The mathematical language used to reflect how long an algorithm takes to run.
+  - O = the order of the function.
+  - N = number of the element.
+- This shit is confusing.
+
+## Collections
+
+- Java collections include:
+  - List
+  - Stack
+  - Queue
+  - Set
+  - Map
+- Java Collections seek to solve many of the implicit problems of arrays.
+  - Problems like fixed size.
+
+### List
+
+- List is basically an array with a flexible size.
+- List is an interface, and `ArrayList` and `LinkedList` are two implementations of the List interface.
+  - `ArrayList` uses a dynamic array.
+  - `LinkedList` uses a doubly-linked list to store elements.
+
+#### [ArrayList](https://docs.oracle.com/javase/8/docs/api/java/util/ArrayList.html)
+
+- `java.util.ArrayList`
+- Implements all of the features of the `List` interface.
+- Accepts any element type, including `null`.
+- Adding items to the `ArrayList` expands its capacity, but has an amortized time cost.
+  - Using something like `ensureCapacity()` before adding a large number of items can reduce the time cost.
+- Not synchronized across threads.
+
+```java
+// sorts an ArraList of items into sub-arrays based on the first letter of each.
+import java.util.ArrayList;
+import java.util.Collections;
+
+class ListSort {
+  public static ArrayList sortByFirstLetter(ArrayList<String> list) {
+    Collections.sort(list);
+    ArrayList<ArrayList<String>> superList = new ArrayList<>();
+    ArrayList<String> firstLetters = new ArrayList<>();
+    for (String i : list) {
+      String firstLetter = String.valueOf(i.charAt(0));
+      if (firstLetters.indexOf(firstLetter) < 0) {
+        firstLetters.add(firstLetter);
+      }
+    }
+    for(String firstLetter : firstLetters) {
+      ArrayList<String> subList = new ArrayList<String>();
+      for(String j : list) {
+        String jFirstLetter = String.valueOf(j.charAt(0));
+        if(jFirstLetter.equals(firstLetter)) {
+          subList.add(j);
+        }
+      }
+      superList.add(subList);
+    }
+    return superList;
+  }
+}
+```
+
+#### [LinkedList](https://docs.oracle.com/javase/8/docs/api/java/util/LinkedList.html)
+
+- `java.util.LinkedList`
+- Doubly-linked list implementation of the `List` and `Deque` interfaces.
+- Implements all optional list operations, and permits all elements (including `null`).
+- Not synchronized across threads.
