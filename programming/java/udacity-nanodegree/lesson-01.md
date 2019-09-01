@@ -16,6 +16,10 @@
     - [List](#list)
       - [ArrayList](#arraylist)
       - [LinkedList](#linkedlist)
+    - [Stack](#stack)
+    - [Queue](#queue)
+    - [Map](#map)
+    - [Set](#set)
 
 ## Basic Java APIs
 
@@ -261,3 +265,68 @@ class ListSort {
 - Doubly-linked list implementation of the `List` and `Deque` interfaces.
 - Implements all optional list operations, and permits all elements (including `null`).
 - Not synchronized across threads.
+
+### [Stack](https://docs.oracle.com/javase/8/docs/api/java/util/Stack.html)
+
+- `java.util.Stack`
+- Stack is like a list, but applies the LIFO (last-in-first-out) principle.
+  - Adding something to a stack adds it to the top. (`push()`)
+  - Remvoving something takes it off the top. (`pop()`)
+- `Deque` interface and its implementations are preferrable to `Stack`.
+
+```java
+public static int calculate(String s) {
+  int len;
+  if (s == null || (len = s.length()) == 0) {
+      return 0;
+  }
+  Stack<Integer> stack = new Stack<>();
+  int num = 0;
+  char sign = '+';
+  for (int i = 0; i < len; i++) {
+    if (Character.isDigit(s.charAt(i))) {
+      num = Character.getNumericValue(s.charAt(i));
+    }
+    if (!Character.isDigit(s.charAt(i)) || i == len - 1) {
+      if (sign == '-') {
+        stack.push(-num);
+      }
+      if (sign == '+') {
+        stack.push(num);
+      }
+      if (sign == '*') {
+        stack.push(stack.pop() * num);
+      }
+      sign = s.charAt(i);
+      num = 0;
+    }
+  }
+
+  int ans = 0;
+  for (int i : stack) {
+    ans += i;
+  }
+  return ans;
+}
+```
+
+### [Queue](https://docs.oracle.com/javase/8/docs/api/java/util/Queue.html)
+
+- `java.util.Queue`
+- `Queue` is an interface.
+- `Queue` applies the FIFO (first-in-first-out) principle.
+  - Adding something to a stack adds it to the back.
+  - Removing something takes it off the front.
+
+### [Map](https://docs.oracle.com/javase/8/docs/api/java/util/Map.html)
+
+- Stores data in key-value pairs.
+- Can't contain duplicate keys.
+- Each key must have one value.
+- Common implementations are `HashMap` and `TreeMap`.
+
+### [Set](https://docs.oracle.com/javase/8/docs/api/java/util/Set.html)
+
+- Stores elements using a hashing.
+- Can't contain duplicate elements.
+- Common implementations are `HashSet` and `TreeSet`.
