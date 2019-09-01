@@ -1,6 +1,14 @@
 # Java Inheritance and Polymorphism
 
 - [Java Inheritance and Polymorphism](#java-inheritance-and-polymorphism)
+<<<<<<< HEAD
+  - [Overview](#overview)
+  - [Usage](#usage)
+
+## Overview
+
+## Usage
+=======
   - [Inheritance](#inheritance)
     - [Overview](#overview)
     - [Usage](#usage)
@@ -128,3 +136,4 @@ pear = new Pear();
 
 Fruit[] fruits = { orange, apple, pear }; // totes valid
 ```
+>>>>>>> 2824b65a18e2fe47941fa5280fb7de2d792e1ef3
