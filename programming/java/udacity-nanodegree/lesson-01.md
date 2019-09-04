@@ -1,6 +1,7 @@
-# Java Basic
+# Java Refresher (Lesson 01)
 
-- [Java Basic](#java-basic)
+- [Java Refresher (Lesson 01)](#java-refresher-lesson-01)
+  - [JavaBeans](#javabeans)
   - [Basic Java APIs](#basic-java-apis)
     - [Math](#math)
     - [Date](#date)
@@ -30,7 +31,6 @@
       - [FileReader](#filereader)
       - [FileOutputStream](#fileoutputstream)
       - [FileWriter](#filewriter)
-      - [[Buffer]()](#buffer)
       - [BufferedReader](#bufferedreader)
   - [Maven](#maven)
     - [Installation](#installation)
@@ -39,6 +39,13 @@
     - [Phases](#phases)
       - [Most Common Lifecycle Phases](#most-common-lifecycle-phases)
     - [Installing the IntelliJ Maven Plug-in](#installing-the-intellij-maven-plug-in)
+
+## JavaBeans
+
+- In Java, you're going to hear the word "bean" or "JavaBean" and you'll say, "What is that?".
+- A "bean" is a reusable software component written in Java that can be manipulated visually in an application builder tool.
+  - A bean gathers many objects into a single class that becomes a reusable component.
+  - They are serializable, have a zero-argument constructor, and allow access to properties using getter and setter methods. 
 
 ## Basic Java APIs
 
@@ -504,7 +511,7 @@ ArraList<String> result = stream
 - BufferedReader class is used to read the text from a character-based input stream.
   - It can be used to read data line by line by readLine() method, it can also be used to read data character by character by read() method.
 - It's important to close() BufferedReaders when they're finished.
-- The buffer size may be specified, or the default size may be used. The default is large enough for most purposes. 
+- The buffer size may be specified, or the default size may be used. The default is large enough for most purposes.
 
 ## Maven
 
