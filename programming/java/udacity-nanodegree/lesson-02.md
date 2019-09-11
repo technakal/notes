@@ -17,6 +17,12 @@
     - [Creating a Controller](#creating-a-controller)
     - [Creating a RestController](#creating-a-restcontroller)
     - [Servlets, Filters, and Listeners](#servlets-filters-and-listeners)
+      - [Servlets](#servlets)
+        - [ServletComponentScan](#servletcomponentscan)
+        - [Bean](#bean)
+      - [Filters](#filters)
+      - [Listener](#listener)
+      - [Result of our Messing About](#result-of-our-messing-about)
   - [Spring Boot File Upload](#spring-boot-file-upload)
 
 ## Microservice and MVC Frameworks
@@ -173,8 +179,307 @@ public class SpringBootHelloworldApplication {
 
 ### Creating a Controller
 
+- I don't know if it's standard, but in this example, we created a Controller package within the com.technakal.FileUpload package.
+  - So, our Controllers fit into our project structure like this.
+  - I assume other Controllers would also go in this package.
+
+```
+src
+  |-main
+       |-java
+           |-com.technakal.FileUpload
+              |-FileUpload.java
+              |-Controller
+                      |-HelloController.java
+```
+
+- To create a Controller, use the `@Controller` annotation.
+- Here's a simple example of a Controller, servicing the "/hello" route.
+  - It has a `@Controller` annotation at the head of the class.
+  - It has a `@RequestMapping` annotation, which declares the route.
+  - It has a `@ResponseBody` annotation, which handles the response.
+
+```java
+package com.technakal.FileUpload.Controller;
+
+// controller-related imports
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+// regular java imports
+import java.util.HashMap;
+import java.util.Map;
+
+@Controller
+public class HelloController {
+  private Map<String, Object> result = new HashMap<String, Object>(); // the response json
+  @RequestMapping("/hello") // route declaration
+  `@ResponseBody` // the response activity
+  public Map<String, Object> hello() {
+    result.put("name", "Noel");
+    result.put("city", "West Bend");
+    return result;
+  }
+}
+```
+
+- Now, navigating to /hello will return a JSON object like this:
+
+```json
+{
+  "city": "West Bend",
+  "name": "Noel"
+}
+```
+
 ### Creating a RestController
 
+- A RestController is a specialized version of a Controller.
+- The RestController combines the `@Controller` and `@ResponseBody` in a single annotation.
+- Here's what our HelloController looks like, once it's transformed into a RestController.
+  - It has a `@RestController` annotation at the head of the class.
+  - It has a `@RequestMapping` annotation, which declares the route.
+  - It no longer needs a @ResponseBody, as that's contained in the @RestController.
+
+```java
+package com.technakal.FileUpload.Controller;
+
+// controller-related imports
+import org.springframework.stereotype.RestController;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+// regular java imports
+import java.util.HashMap;
+import java.util.Map;
+
+@RestController
+public class HelloController {
+  private Map<String, Object> result = new HashMap<String, Object>(); // the response json
+  @RequestMapping("/hello") // route declaration
+  public Map<String, Object> hello() {
+    result.put("name", "Noel");
+    result.put("city", "West Bend");
+    return result;
+  }
+}
+```
+
 ### Servlets, Filters, and Listeners
+
+#### Servlets
+
+- Servlet is a class used to handle requests in web applications.
+- It's server-side code.
+- Spring Boot uses Servlet to receive requests from the client-side.
+- There are two ways, in Spring Boot, to use Servlets:
+  - @ServletComponentScan
+  - @Bean
+
+##### ServletComponentScan
+
+- To set up the ServletComponentScan, you need to add a `@ServletComponentScan` annotation right after your @SpringBootApplication.
+  - `@ServletComponentScan` enables scanning for servlets, filters, and listeners.
+  - Only works on embedded servers.
+  - Typically, you want to specify the Typically, `value`, `basePackages`, or `basePackageClasses` that you want to scan (with?).
+    - `value` is an alias for `basePackages`
+    - `basePackageClasses is a type-safe alternative to`basePackages`, which tells the system to scan for the packages of each specified class.
+    - In the absence of these settings, scanning will be performed from the package of the class with the annotation.
+
+```java
+// using value
+// value is just shorthand for basePackage
+@ServletComponentScan(value="org.pkg.name")
+// using basePackages
+@ServletComponentScan(basePackages="org.pkg.name")
+// using basePackageClasses
+// this one is type-safe
+@ServletComponentScan(basePackageClasses="org.pkg.name")
+```
+
+- The `@ServletComponentScan` is making SpringBoot scan for `@WebServlet` annotation and it’s only performed when using an embedded web server such as Spring Boot.
+  - Here's some additional information about [WebServlet](https://docs.spring.io/spring-boot/docs/current/api/org/springframework/boot/web/servlet/ServletComponentScan.html).
+- This is in the FileUpload.java file:
+
+```java
+package com.technakal.FileUpload;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.web.servlet.ServletComponentScan;
+
+@SpringBootApplication
+@ServletComponentScan // here she is. isn't she beautiful.
+public class FileUploadApplication {
+	public static void main(String[] args) {
+		SpringApplication.run(FileUploadApplication.class, args);
+	}
+}
+```
+
+- Now, your app is watching for servlets.
+- To create the actual servlet, add a Servlet package.
+  - Now our project structure looks like this:
+
+```
+src
+  |-main
+       |-java
+           |-com.technakal.FileUpload
+              |-FileUpload.java
+              |-Controller
+              |       |-HelloController.java
+              |-Servlet
+                      |-HelloServlet.java
+```
+
+- Within the HelloServlet.java file, we'll add a Servlet to the "/helloservlet" route.
+- The Servlet looks like this.
+  - The `@WebServlet` annotation declare the name of the servlet and its route (urlPatterns).
+  - The Servlet extends the HttpServlet.
+  - The Servlet overrides the doGet method of the HttpServlet and makes it print out something.
+
+```java
+package com.technakal.FileUpload.Servlet;
+
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+@WebServlet(name="HelloServlet", urlPatterns = "/helloservlet")
+public class HelloServlet extends HttpServlet {
+  @Override
+  protected String doGet(HttpServletRequest req, HttpServletResponse res) {
+    System.out.println("Running HelloServlet doGet() method.");
+  }
+}
+```
+
+##### Bean
+
+- You can also declare servlets using @Bean.
+- Bean is an object that is used by the Spring IoC Controller.
+  - More info on [Spring IoC Controllers](https://howtodoinjava.com/spring-core/different-spring-ioc-containers/).
+- `@ComponentScan` finds `@Bean`s.
+- `@Autowired` injects beans?
+- More info on [`@Beans`](https://www.youtube.com/watch?v=K5bkniAjkZA&t=21s)
+- `@Bean`s have to do with dependency injection.
+  - Dependency injection helps to decouple dependent code.
+    - In Spring, dependency injection creates Beans and wires up your program's dependencies automatically so you don't have to.
+  - To use this, you declare certain classes as components, using the `@Component` annotation.
+  - Then, you add in `@Autowired` annotation where those components are used.
+  - This allows you to just use and pass the instantiated classes, without having to write things like `new ClassName()`.
+    - You can just pass in the `ClassName` and Spring instantiated for you, etc.
+  - This improves ease of testing.
+  - You can use `@Qualifier`s to differentiate `@Component`s that share the same signature or interface.
+
+#### Filters
+
+- Filters are used for pre- and postprocesing of web requests.
+- It can be used to validate, encrypt/decrypt, log results, etc.
+  - For instance, it can filter out request if it contains some invalid content, or ignore requests that do not contain required request parameter.
+- Creating a filter is a lot like everything else in Spring Boot. You just use an annotation, dude.
+- Here's a filter implemented on our /helloservlet route.
+  - This will run when helloServlet is accessed, and kind of surrounds the HelloServlet action.
+  - The `@WebFilter` annotation declare the filter, names it, and says which route it'll be on.
+  - The filter implements the Filter interface.
+  - The `@Override` creates a custom version of doFilter(), which prints a statement, runs the code in HelloServlet, then prints another statement.
+    - Basically, I think what we've done is created a doFilter() method that says, "Started', then runs the servlet associated with the route, then continues on its way, as long as that servlet doesn't throw an exception.
+
+```java
+package com.technakal.FileUpload.Servlet;
+
+import javax.servlet.Filter;
+import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+import javax.servlet.annotation.WebFilter;
+import java.io.IOException;
+
+@WebFilter(filterName = "HelloFilter", urlPatterns = "/helloservlet")
+public class HelloFilter implements Filter {
+  @Override
+  public void doFilter(ServletRequest servletRequest,
+                       ServletResponse servletResponse,
+                       FilterChain filterChain) throws IOException, ServletException {
+    System.out.println("Performing HelloFilter process.");
+    filterChain.doFilter(servletRequest, servletResponse);
+    System.out.println("Done executing filter process.");
+  }
+}
+```
+
+#### Listener
+
+- The Listener is used to listen for events in the event container.
+- Events include things like:
+  - Creating a session.
+  - Creating a session attribute.
+- Here's an example Listener.
+  - `@WebListener` initiates th elistener.
+  - The Listener implements the ServletContextListener.
+  - When the servlet is created, the contextInitialized runs.
+  - When the servlet is terminated, the contextDestroyed runs.
+
+```java
+package com.technakal.FileUpload.Servlet;
+
+import javax.servlet.ServletContextEvent;
+import javax.servlet.ServletContextListener;
+import javax.servlet.annotation.WebListener;
+
+@WebListener
+public class HelloListener implements ServletContextListener {
+  @Override
+  public void contextDestroyed(ServletContextEvent servletContextEvent) {
+    System.out.println("Servlet context destroyed. (THIS IS FROM HELLOLISTENER).");
+  }
+  @Override
+  public void contextInitialized(ServletContextEvent servletContextEvent) {
+    System.out.println("Servlet context initialized. (THIS IS FROM HELLOLISTENER).");
+  }
+}
+```
+
+#### Result of our Messing About
+
+- In the console of the server, here's what the items we've set up are doing:
+  - You'll notice the following lines are from our listener, filter, and servlet.
+    - Servlet context initialied.
+    - Performing HelloFilter process.
+    - Running HelloServlet doGet() method.
+    - Done executing filter process.
+    - Servlet context destroyed.
+
+```shell
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::        (v2.1.8.RELEASE)
+
+2019-09-10 18:45:49.977  INFO 13016 --- [           main] c.t.FileUpload.FileUploadApplication     : Starting FileUploadApplication on psciskjmi with PID 13016 (started by paperspace in C:\Users\paperspace\Desktop\Udacity Nanodegree\FileUpload)
+2019-09-10 18:45:49.980  INFO 13016 --- [           main] c.t.FileUpload.FileUploadApplication     : No active profile set, falling back to default profiles: default
+2019-09-10 18:45:51.484  INFO 13016 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port(s): 8080 (http)
+2019-09-10 18:45:51.521  INFO 13016 --- [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2019-09-10 18:45:51.521  INFO 13016 --- [           main] org.apache.catalina.core.StandardEngine  : Starting Servlet engine: [Apache Tomcat/9.0.24]
+2019-09-10 18:45:51.641  INFO 13016 --- [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2019-09-10 18:45:51.642  INFO 13016 --- [           main] o.s.web.context.ContextLoader            : Root WebApplicationContext: initialization completed in 1595 ms
+Servlet context initialized. (THIS IS FROM HELLOLISTENER).
+2019-09-10 18:45:51.941  INFO 13016 --- [           main] o.s.s.concurrent.ThreadPoolTaskExecutor  : Initializing ExecutorService 'applicationTaskExecutor'
+2019-09-10 18:45:52.172  INFO 13016 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port(s): 8080 (http) with context path ''
+2019-09-10 18:45:52.178  INFO 13016 --- [           main] c.t.FileUpload.FileUploadApplication     : Started FileUploadApplication in 2.712 seconds (JVM running for 3.284)
+Performing HelloFilter process. (THIS IS FROM HELLOFILTER).
+Running HelloServlet doGet() method. (THIS IS FROM HELLOSERVLET).
+Done executing filter process. (THIS IS FROM HELLOFILTER).
+Servlet context destroyed. (THIS IS FROM HELLOLISTENER).
+
+Process finished with exit code -1
+
+```
 
 ## Spring Boot File Upload
