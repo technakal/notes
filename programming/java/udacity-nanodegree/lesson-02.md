@@ -16,6 +16,7 @@
   - [Spring Boot MVC Development](#spring-boot-mvc-development)
     - [Creating a Controller](#creating-a-controller)
     - [Creating a RestController](#creating-a-restcontroller)
+    - [Spring IoC](#spring-ioc)
     - [Servlets, Filters, and Listeners](#servlets-filters-and-listeners)
       - [Servlets](#servlets)
         - [ServletComponentScan](#servletcomponentscan)
@@ -23,6 +24,7 @@
       - [Filters](#filters)
       - [Listener](#listener)
       - [Result of our Messing About](#result-of-our-messing-about)
+  - [Static Resources in Spring Boot](#static-resources-in-spring-boot)
   - [Spring Boot File Upload](#spring-boot-file-upload)
 
 ## Microservice and MVC Frameworks
@@ -265,6 +267,84 @@ public class HelloController {
 }
 ```
 
+### Spring IoC
+
+- Spring uses a method called IoC (Inversion of Control).
+  - IoC is the process by which an object identifies its dependencies without creating them.
+- In the traditional approach, you instantiate dependencies as you need them.
+
+```java
+// company class requires an Address object
+public class Company {
+  public Address address;
+
+  public Company(Address address) {
+    this.address = address;
+  }
+}
+
+// Address class creates the Address object
+public class Address {
+  public String street;
+  public String city;
+  public String state;
+
+  public Address(String street, String city, String state) {
+    this.street = street;
+    this.city = city;
+    this.state = state;
+  }
+}
+
+// to use Company, we need to create Address first
+public class Application {
+  public static void main(String[] args) {
+    Address techAddress = new Address("2301 E State St", "Kansas City", "MO");
+    Company technakalCompany = new Company(techAddress);
+  }
+}
+```
+
+- With IoC, the `techAddress`, in the example above, isn't instantiated prior to creating the technakalCompany.
+- Instead of constructing its dependencies, with IoC, it can retrieve them from an IoC container.
+  - Just requires appropriate metadata configuration.
+- To rewrite our example using IoC (and Spring Beans), we do this:
+  - Identify Company as a `@Component`.
+  - Create a metadata configuration class.
+  - Add an entry for Address.
+  - Create an instance of the AnnotationConfigApplicationContext class to build up a container to instantiate our Config class.
+
+```java
+// identifying a component
+@Component
+public class Company {
+  // comapny class details
+}
+
+// configuratino metadata
+@Configuration
+
+@ComponentScan(basePackageClasses = Company.class)
+public class Config {
+  @Bean
+  public Address getAddress() {
+    return new Address("2301 E State St", "Kansas City", "MO");
+  }
+}
+
+// instantiating the config
+public class Application {
+  public static void main(String[] args) {
+    ApplicationContext context = new AnnotationConfigApplicationContext(Config.class)
+    Company technakalCompany = context.getBean("company", Company.class);
+  }
+}
+```
+
+- The configuration class produces a bean of type Address.
+- It also carries the @ComponentScan annotation, which instructs the container to looks for beans in the package containing the Company class.
+- You register your application context by instantiating the AnnotationConfigApplicationContext, passing in the context information.
+
 ### Servlets, Filters, and Listeners
 
 #### Servlets
@@ -358,21 +438,63 @@ public class HelloServlet extends HttpServlet {
 
 ##### Bean
 
+- What is a bean?
+  - Spring beans are objects constructed by the IoC container.
+  - [`@Beans`](https://www.youtube.com/watch?v=K5bkniAjkZA&t=21s)
+  - [What is a Spring Bean?](https://www.baeldung.com/spring-bean)
 - You can also declare servlets using @Bean.
-- Bean is an object that is used by the Spring IoC Controller.
-  - More info on [Spring IoC Controllers](https://howtodoinjava.com/spring-core/different-spring-ioc-containers/).
-- `@ComponentScan` finds `@Bean`s.
-- `@Autowired` injects beans?
-- More info on [`@Beans`](https://www.youtube.com/watch?v=K5bkniAjkZA&t=21s)
-- `@Bean`s have to do with dependency injection.
-  - Dependency injection helps to decouple dependent code.
-    - In Spring, dependency injection creates Beans and wires up your program's dependencies automatically so you don't have to.
-  - To use this, you declare certain classes as components, using the `@Component` annotation.
-  - Then, you add in `@Autowired` annotation where those components are used.
-  - This allows you to just use and pass the instantiated classes, without having to write things like `new ClassName()`.
-    - You can just pass in the `ClassName` and Spring instantiated for you, etc.
-  - This improves ease of testing.
-  - You can use `@Qualifier`s to differentiate `@Component`s that share the same signature or interface.
+  - A bean is an object that is instantiated, assembled, and otherwise managed by a Spring IoC container.
+  - `@Bean`s have to do with dependency injection.
+    - Dependency injection helps to decouple dependent code.
+      - In Spring, dependency injection creates Beans and wires up your program's dependencies automatically so you don't have to.
+    - To use this, you declare certain classes as components, using the `@Component` annotation.
+    - Then, you add in `@Autowired` annotation where those components are used.
+    - This allows you to just use and pass the instantiated classes, without having to write things like `new ClassName()`.
+      - You can just pass in the `ClassName` and Spring instantiated for you, etc.
+    - This improves ease of testing.
+    - You can use `@Qualifier`s to differentiate `@Component`s that share the same signature or interface.
+- Here's our HelloServlet written with `@ServletComponentScan`
+
+```java
+@SpringBootApplication
+@ServletComponentScan
+public class FileUploadApplication {
+	public static void main(String[] args) {
+		SpringApplication.run(FileUploadApplication.class, args);
+  }
+}
+```
+
+- Here's our HelloServlet rewritten with `@Bean`:
+
+```java
+@SpringBootApplication
+public class FileUploadApplication {
+	@Bean
+	public ServletRegistrationBean getServletRegistrationBean() {
+		ServletRegistrationBean servletBean = new ServletRegistrationBean(new HelloServlet());
+		servletBean.addUrlMappings("/helloservlet"); // add url mapping
+		return servletBean;
+	}
+
+	@Bean
+	public FilterRegistrationBean getFilterRegistrationBean() {
+		FilterRegistrationBean filterBean = new FilterRegistrationBean(new HelloFilter());
+		filterBean.addUrlPatterns("/helloservlet"); // add url mapping
+		return filterBean;
+	}
+
+	@Bean
+	public ServletListenerRegistrationBean<HelloListener> getListenerRegistrationBean() {
+		ServletListenerRegistrationBean listenerBean = new ServletListenerRegistrationBean(new HelloListener());
+		return listenerBean;
+	}
+
+	public static void main(String[] args) {
+		SpringApplication.run(FileUploadApplication.class, args);
+	}
+}
+```
 
 #### Filters
 
@@ -385,7 +507,8 @@ public class HelloServlet extends HttpServlet {
   - The `@WebFilter` annotation declare the filter, names it, and says which route it'll be on.
   - The filter implements the Filter interface.
   - The `@Override` creates a custom version of doFilter(), which prints a statement, runs the code in HelloServlet, then prints another statement.
-    - Basically, I think what we've done is created a doFilter() method that says, "Started', then runs the servlet associated with the route, then continues on its way, as long as that servlet doesn't throw an exception.
+    - `FilterChain` gets the next object invoked, similar to `next()` in Express.
+    - The `ServletRequest` object can't share information between listeners and servlets.
 
 ```java
 package com.technakal.FileUpload.Servlet;
@@ -481,5 +604,11 @@ Servlet context destroyed. (THIS IS FROM HELLOLISTENER).
 Process finished with exit code -1
 
 ```
+
+## Static Resources in Spring Boot
+
+- In Spring Boot, you can easily use static resources by adding them to the `static` file.
+- Create an index.html file, and Spring Boot will serve that up.
+- Add images, whatever.
 
 ## Spring Boot File Upload
