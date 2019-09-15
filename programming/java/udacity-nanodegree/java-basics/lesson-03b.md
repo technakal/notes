@@ -1,6 +1,6 @@
-# Java Spring Boot Testing, Hot Swap, and Logging
+# Spring Boot Testing, Hot Swap, and Logging
 
-- [Java Spring Boot Testing, Hot Swap, and Logging](#java-spring-boot-testing-hot-swap-and-logging)
+- [Spring Boot Testing, Hot Swap, and Logging](#spring-boot-testing-hot-swap-and-logging)
   - [Overview](#overview)
   - [Unit Testing](#unit-testing)
     - [Using JUnit with Spring Boot](#using-junit-with-spring-boot)

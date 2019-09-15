@@ -1,6 +1,6 @@
-# Java Spring Boot (Introduction)
+# Spring Boot (Introduction)
 
-- [Java Spring Boot (Introduction)](#java-spring-boot-introduction)
+- [Spring Boot (Introduction)](#spring-boot-introduction)
   - [Microservice and MVC Frameworks](#microservice-and-mvc-frameworks)
     - [Microservices](#microservices)
       - [Resources](#resources)

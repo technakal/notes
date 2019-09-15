@@ -1,6 +1,6 @@
-# Java Spring Boot Templating
+# Spring Boot Templating
 
-- [Java Spring Boot Templating](#java-spring-boot-templating)
+- [Spring Boot Templating](#spring-boot-templating)
   - [Overview](#overview)
     - [What is a Template Engine?](#what-is-a-template-engine)
   - [Freemarker](#freemarker)

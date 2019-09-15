@@ -1,6 +1,6 @@
-# Java Spring Boot Validation
+# Spring Boot Validation
 
-- [Java Spring Boot Validation](#java-spring-boot-validation)
+- [Spring Boot Validation](#spring-boot-validation)
   - [Setting Requirements on Underlying Classes](#setting-requirements-on-underlying-classes)
   - [Configuring Controllers](#configuring-controllers)
   - [Setting Up Our Templates](#setting-up-our-templates)
