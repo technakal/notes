@@ -3,6 +3,9 @@
 - [Java Spring Boot](#java-spring-boot)
   - [Bootstrapping Spring Boot](#bootstrapping-spring-boot)
   - [Annotations](#annotations)
+  - [Making a Simple Rest API](#making-a-simple-rest-api)
+    - [RestController](#restcontroller)
+    - [RequestMapping](#requestmapping)
 
 ## Bootstrapping Spring Boot
 
@@ -17,3 +20,34 @@
 
 - Annotations in Spring Boot wire things up in the background.
   - They speed up development by providing quick configuration shortcuts.
+
+## Making a Simple Rest API
+
+### RestController
+
+- Create a class file and annotate the class with the @RestController annotation.
+  - This sets up the class as a controller for your application.
+
+```java
+@RestController
+class HelloWorld {
+  // stuff
+}
+
+```
+
+### RequestMapping
+
+- To create a route, you annotate a method within your RestController with @RequestMapping.
+- In this example, accessing the root directory ("/") triggers the index() method.
+  - This returns the string "Hello World".
+
+```java
+@RestController
+class HelloWorld {
+  @RequestMapping("/") // sets up the root location as a route
+  public String index() {
+    return "Hello world!";
+  }
+}
+```
