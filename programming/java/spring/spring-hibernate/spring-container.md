@@ -11,6 +11,11 @@
     - [Most Common Types of Injections](#most-common-types-of-injections)
     - [Basic Process](#basic-process)
     - [Dependency Injection Example](#dependency-injection-example)
+    - [Setter Injection](#setter-injection)
+      - [Setter Injection Example](#setter-injection-example)
+    - [Injecting Literal Values](#injecting-literal-values)
+      - [Literal Value Injection Example](#literal-value-injection-example)
+    - [Injecting Values from a Property File](#injecting-values-from-a-property-file)
 
 ## Spring's Primary Functions
 
@@ -118,5 +123,188 @@ class MyApp {
 ### Dependency Injection Example
 
 - Coaches now also give fortune advice.
-- We create a FortuneService interface.
-- We implement it in HappyFortune.
+- We create a `FortuneService` interface.
+- We implement it in `HappyFortuneService`.
+- We add a method to our `Coach` interface for returning this fortune.
+- In each implementation of `Coach`, we add a field for the `FortuneService`, create a constructor that accepts the `FortuneService` as an argument, and implement the `getFortune()` method.
+  - For good backwards compatibility, we also implement a no-arg constructor on each Coach so that the FortuneService becomes optional to the class.
+- `FortuneService` is a dependency of each Coach, now, so we can configure our `applicationContext` to inject this in the constructor!
+
+- `FortuneService`
+
+```java
+public interface FortuneService {
+  public String getFortune();
+}
+```
+
+- `HappyFortuneService`
+
+```java
+public class HappyFortuneService implements FortuneService {
+
+  @Override
+  public String getFortune() {
+    return "Today is your lucky day!";
+  }
+
+}
+
+```
+
+- `Coach`
+
+```java
+public interface Coach {
+
+  public String getDailyWorkout();
+
+  public String getDailyFortune(); // new method from FortuneService
+
+}
+```
+
+- `BaseballCoach` example
+  - This is repeated in each implementation of `Coach`.
+
+```java
+public class BaseballCoach implements Coach {
+
+  private FortuneService fortuneService; // new field for FortuneService
+
+  // no-arg constructor
+  public BaseballCoach() {}
+
+  // constructor implements fortuneService in BaseballCoach
+  public BaseballCoach(FortuneService fortuneService) {
+    this.fortuneService = fortuneService;
+  }
+
+  @Override
+  public String getDailyWorkout() {
+	return "Spend 30 minutes on batting practice.";
+  }
+
+  // and here's our new method override
+  @Override
+  public String getDailyFortune() {
+    return this.fortuneService.getFortune();
+  }
+
+}
+```
+
+### Setter Injection
+
+- Another use for injection is setter injection.
+- In this case, we create a configuration tag in our bean for `<property>`.
+- Spring uses this tag and looks for any setter that references the `name` attribute.
+- Then, it injects the corresponding `bean`.
+
+#### Setter Injection Example
+
+- Here, we're injecting a `FortuneService` into the setter for `CricketCoach`.
+- We define the `CricketCoach` as a no-arg constructor with a `fortuneService` field.
+- The `CricketCoach` also has the `setFortuneService()` method, which is our setter.
+- In the XML config, we add and configure the <property> on `CricketCoach` to point to the FortuneService.
+- Let's take a look.
+
+- `CricketCoach`
+
+```java
+public class CricketCoach implements Coach {
+
+  private FortuneService fortuneService;
+
+  public CricketCoach() {
+    System.out.println("CricketCoach: inside no-arg constructor.");
+  }
+
+  // setter name = "set" + property name
+  public void setFortuneService(FortuneService fortuneService) {
+    System.out.println("Setting FortuneService");
+    this.fortuneService = fortuneService;
+  }
+
+  @Override
+  public String getDailyWorkout() {
+    return "Practice fast bowling for 15 minutes.";
+  }
+
+  @Override
+  public String getDailyFortune() {
+    return this.fortuneService.getFortune();
+  }
+
+}
+```
+
+- `applicationContext.xml`
+
+```xml
+<bean id="myCricketCoach"
+      class="com.technakal.springdemo.CricketCoach">
+  <!-- name attribute equals setter minus "set"
+      this will call setFortuneService -->
+  <property name="fortuneService" ref="myFortune"/>
+</bean>
+```
+
+### Injecting Literal Values
+
+- Spring can also inject literal values, rather than just other class references/dependencies.
+- This is done just like other setter or constructor injections, but instead of using a `ref` attribute, we use a `value` attribute.
+
+#### Literal Value Injection Example
+
+- Here, we're injecting an `emailAddress` and `teamName` into our `CricketCoach`.
+
+  - Create the fields.
+  - Create the setters.
+  - Configure the xml.
+
+- `CricketCoach`
+
+```java
+public class CricketCoach implements Coach {
+
+  // ...
+
+  private String emailAddress;
+  private String teamName;
+
+  public String getEmailAddress() {
+    return emailAddress;
+  }
+
+  public void setEmailAddress(String emailAddress) {
+    System.out.println("CricketCoach: setting emailAddress.");
+    this.emailAddress = emailAddress;
+  }
+
+  public String getTeamName() {
+    return teamName;
+  }
+
+  public void setTeamName(String teamName) {
+    System.out.println("CricketCoach: setting teamName.");
+    this.teamName = teamName;
+  }
+
+  // ...
+}
+```
+
+- `applicationContext`
+
+```xml
+<bean>
+  <!-- injection via reference uses `ref` attribute -->
+  <property name="fortuneService" ref="myFortuneService" />
+  <!-- injection of literal values uses `value` attribute -->
+  <property name="emailAddress" value="thebestcoach@technakal.com" />
+  <property name="teamName" value="Sunrisers Hyderabad" />
+</bean>
+```
+
+### Injecting Values from a Property File
