@@ -16,6 +16,16 @@
     - [Injecting Literal Values](#injecting-literal-values)
       - [Literal Value Injection Example](#literal-value-injection-example)
     - [Injecting Values from a Property File](#injecting-values-from-a-property-file)
+      - [Injecting from a File Process](#injecting-from-a-file-process)
+      - [Injecting from File Example](#injecting-from-file-example)
+  - [More About Beans](#more-about-beans)
+    - [Bean Scope](#bean-scope)
+    - [Types of Bean Scopes](#types-of-bean-scopes)
+    - [Declaring Scope](#declaring-scope)
+      - [Testing Scope Type](#testing-scope-type)
+    - [Bean Lifecycle](#bean-lifecycle)
+      - [Custom Methods](#custom-methods)
+        - [Additional Info on Init Methods and Destroy Methods](#additional-info-on-init-methods-and-destroy-methods)
 
 ## Spring's Primary Functions
 
@@ -308,3 +318,181 @@ public class CricketCoach implements Coach {
 ```
 
 ### Injecting Values from a Property File
+
+- Injecting literal values becomes much more useful if those values aren't hard-coded into our config file.
+- Good news! We can inject from a property file.
+
+#### Injecting from a File Process
+
+- Create the file and load it with values.
+- Load those values from the file into the config file.
+- Retrieve the values from the config file.
+
+#### Injecting from File Example
+
+- So, if we're replacing our earlier examples for email and team with file values, we do three things:
+
+  - Create a .properties file to hold our properties we want to inject.
+    - This is a regular text file with key-value pairs. We reference them later by the key.
+  - Add a <context:property-placeholder/> tag near the top of our config file.
+    - This includes the classpath to get to the file.
+    - I'll include the full file so it's easy to see where it is.
+  - Update the `bean` referencing email and team to instead reference the key in the properties file.
+    - This uses `${}` syntax.
+
+- `sport.properties`
+
+```
+foo.email=mybestcoach@technakal.com
+foo.team=Royal Challengers Bangalore
+```
+
+- `applicationContext`
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:context="http://www.springframework.org/schema/context"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans
+    http://www.springframework.org/schema/beans/spring-beans.xsd
+    http://www.springframework.org/schema/context
+    http://www.springframework.org/schema/context/spring-context.xsd">
+
+    <!-- load the properties file -->
+    <!-- here's the property file loader -->
+    <context:property-placeholder location="classpath:sport.properties" />
+
+    <!-- Define your beans here -->
+    <bean id="myLoggerConfig" class="com.technakal.springdemo.LoggerConfig" init-method="initLogger">
+      <property name="rootLoggerLevel" value="FINE" />
+      <property name="printedLoggerLevel" value="FINE"/>
+    </bean>
+    <bean id="myFortune"
+          class="com.technakal.springdemo.HappyFortuneService"
+    ></bean>
+    <bean id="myCoach"
+          class="com.technakal.springdemo.TrackCoach">
+      <constructor-arg ref="myFortune" />
+    </bean>
+    <bean id="myCricketCoach"
+          class="com.technakal.springdemo.CricketCoach">
+          <property name="fortuneService" ref="myFortune"/>
+          <!-- here, we've updated to reference the property key -->
+          <property name="emailAddress" value="${foo.email}" />
+          <property name="teamName" value="${foo.team}" />
+    </bean>
+</beans>
+```
+
+## More About Beans
+
+### Bean Scope
+
+- Scopes refer to the lifecycle of a bean.
+  - How long does it live?
+  - How many instances of it are there?
+  - How is it shared?
+- Default scope for a bean is "singleton".
+  - All of the examples in [spring-container.md](./spring-container.md) are singleton because we don't explicitly identify their scope.
+
+### Types of Bean Scopes
+
+| Scope          | Description                                                  |
+| -------------- | ------------------------------------------------------------ |
+| singleton      | Create a single shared instance of the bean. Default scope.  |
+| prototype      | Creates a new bean instance for each container request.      |
+| request        | Scoped to an HTTP web request. Only used for web apps.       |
+| session        | Scoped to an HTTP web session. Only used for web apps.       |
+| global-session | Scoped to a global HTTP web session. Only used for web apps. |
+
+- A singleton is any bean where the Spring container creates only one instance of that bean.
+  - A singleton is cached in memory.
+  - All requests to that bean share the same instance.
+  - Best use case for singletons are for stateless beans.
+- A prototype scope creates a new instance for each reference to a bean.
+
+### Declaring Scope
+
+- You can explicitly express bean scope using the `scope` attribute on your `<bean>` declaration.
+
+```xml
+<bean id="myCoach"
+      class="com.technakal.springdemo.TrackCoach"
+      scope="prototype"
+>
+<!-- bean content... -->
+</bean>
+```
+
+#### Testing Scope Type
+
+- You can see the difference between singleton and prototype with a simple sysout statement.
+
+```java
+// if scope is singleton
+Coach theCoach = context.getBean("myCoach", Coach.class);
+Coach alphaCoach = context.getBean("myCoach", Coach.class);
+
+boolean result = theCoach == alphaCoach;
+System.out.println("Point to the same location: " + result); // true
+System.out.println(theCoach); // com.technakal.springdemo.TrackCoach@647e447
+System.out.println(alphaCoach); // com.technakal.springdemo.TrackCoach@647e447
+
+// if scope is prototype
+Coach theCoach = context.getBean("myCoach", Coach.class);
+Coach alphaCoach = context.getBean("myCoach", Coach.class);
+
+boolean result = theCoach == alphaCoach;
+System.out.println("Point to the same location: " + result); // false
+System.out.println(theCoach); // com.technakal.springdemo.TrackCoach@3c407114
+System.out.println(alphaCoach); // com.technakal.springdemo.TrackCoach@35ef1869
+```
+
+### Bean Lifecycle
+
+- Here's what the bean lifecycle looks like:
+  - Container started.
+  - Bean instantiated.
+  - Dependencies injected.
+  - Internal Spring processing.
+  - Custom init method.
+  - Bean is ready for use.
+  - Container shuts down.
+  - Custom destroy method.
+  - Done.
+
+#### Custom Methods
+
+- Spring allows you to use "hooks".
+- Hooks are custom code that can run during bean initialization or bean destruction.
+  - Think of it like React's own lifecycle hooks, such as `componentDidMount()`.
+- To use custom methods, you add the method as an attribute to the bean.
+  - `init-method` runs at bean initialization.
+  - `destroy-method` runs at bean destruction.
+- In the following example:
+  - `doStartupStuff()` will run when the bean is initialized.
+  - `doCleanupStuff()` will run when the bean is destroyed.
+
+```xml
+<bean id="myCoach"
+      class="com.technakal.springdemo.TrackCoach"
+      init-method="doStartupStuff"
+      destroy-method="doCleanupStuff"
+>
+<!-- bean content... -->
+</bean>
+```
+
+##### Additional Info on Init Methods and Destroy Methods
+
+- The method can have any access modifier (public, protected, private).
+- The method can have any return type.
+  - If you give a return type just note that you will not be able to capture the return value.
+  - `void` is most commonly used.
+- The method can have any method name.
+- The method can not accept any arguments.
+  - The method should be no-arg.
+- Spring does not manage the destruction of `prototype` scoped beans.
+  - It is up to the client to manage these resources.
+  - As a result, only the `init-method` code executes on `prototype` scoped beans.
