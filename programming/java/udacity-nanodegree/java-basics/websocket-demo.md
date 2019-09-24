@@ -93,3 +93,53 @@ public class UserController {
 ```
 
 ## Configuring WebSocket
+
+- Add a config directory and build everything in this section there.
+
+### Configuring Message Broker
+
+- To enable messaging in WebSocket and STOMP, we also need to create messaging configuration.
+  - Implement a class called `WebSocketConfig`.
+  - Make the class extend `AbstractWebSocketMessageBrokerConfigurer`, which is deprecated, or implement `WebSocketMessageBrokerConfigurer`.
+  - Within this class, we override `configureMessageBroker` and `registerStompEndpoints`
+
+```java
+@Configuration
+@EnableWebSocketMessageBroker
+public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
+  @Override
+  public void configureMessageBroker(MessageBrokerRegistry config) {
+    config.enableSimpleBroker("/topic");
+    config.setApplicationDestinationPrefixes("/app");
+  }
+  @Override
+  public void registerStompEndpoints(StompEndpointRegistry registry) {
+    registry.addEndpoint("/websocket-demo").withSockJS();
+  }
+}
+```
+
+### Configuring Scheduler
+
+- The scheduler allows for adhoc messages sent on a schedule.
+- It's created with the `@Configuration` and `@EnableScheduler` annotations.
+- Within the class, `@Autowired` our `SimpMessagingTemplate`.
+- We also define our messaging method, which pushes the messages to the user on the schedule defined in the `@Scheduled` annotation.
+  - In this case, we have a delay of 5000, and we send our message to /topic/user, from the user "Sheduler".
+
+```java
+@EnableScheduling
+@Configuration
+public class SchedulerConfig {
+  @Autowired
+  SimpMessagingTemplate template;
+
+  @Scheduled(fixedDelay = 5000)
+  public void sendAdhocMessage() {
+    template.convertAndSend("/topic/user",
+        new UserResponse("Scheduler"));
+  }
+}
+```
+
+## Creating our UI
