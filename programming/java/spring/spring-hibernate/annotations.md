@@ -12,7 +12,14 @@
       - [Using Default Bean ID](#using-default-bean-id)
     - [Dependency Injection Annotations](#dependency-injection-annotations)
       - [Autowiring](#autowiring)
-      - [Constructor Injection Development Process](#constructor-injection-development-process)
+      - [Constructor Injection](#constructor-injection)
+        - [Development Process](#development-process-1)
+      - [Setter Injection](#setter-injection)
+        - [Development Process](#development-process-2)
+      - [Method Injection](#method-injection)
+      - [Field Injection](#field-injection)
+    - [Qualifiers](#qualifiers)
+    - [Injecting Values from File](#injecting-values-from-file)
 
 ## Java Annotations
 
@@ -135,9 +142,190 @@ context.close();
   - Constructor
   - Setter
   - Field
+  - Any of these options is fine. Just pick one and be consistent throughout the project.
+- As of Spring 4.3, the `@Autowired` annotation is now optional in certain cases (where Spring can easily predict what class the dependency is).
+  - Still, it's good practice (for readability) to make the wiring explicit with the annotation.
+  - [More info](https://docs.spring.io/spring/docs/current/spring-framework-reference/core.html#beans-autowired-annotation)
 
-#### Constructor Injection Development Process
+#### Constructor Injection
+
+##### Development Process
 
 - Define dependency interface and class.
+  - Make sure your classes are identified as `@Component`s so that Spring's component scanning picks them up.
 - Create a constructor in another class that needs an injection.
+  - On the constructor that needs to be wired up, just add the `@Autowired` annotation.
+  - With this annotation, Spring will now scan for a `@Component` that meets the injection requirement.
+    - Good thing we made our dependency class a `@Component`, right?
 - Configure the dependency injection via the `@Autowired` annotation.
+
+- `HappyFortuneService` (implements FortuneService)
+
+```java
+@Component // This sets up HappyFortuneService to be a wire-able dependency.
+public class HappyFortuneService implements FortuneService {
+
+  @Override
+  public String getFortune() {
+    return "That's one lucky duck!";
+  }
+
+}
+```
+
+- `TennisCoach` (depends on `FortuneService`)
+
+```java
+@Component
+public class TennisCoach implements Coach {
+
+  FortuneService fortuneService;
+
+  @Autowired // tells Spring to scan for the dependency.
+  // In this case, it's scanning for anything that implements FortuneService.
+  public TennisCoach(FortuneService fortuneService) {
+    this.fortuneService = fortuneService;
+  }
+
+  @Override
+  public String getDailyWorkout() {
+    return "Practice your backhand volley.";
+  }
+
+  @Override
+  public String getDailyFortune() {
+    return fortuneService.getFortune();
+  }
+
+}
+```
+
+#### Setter Injection
+
+- Setter injection can also make use of annotations.
+
+##### Development Process
+
+- Create setter methods in class(es).
+- Configure dependency injection via the `@Autowired` annotation.
+
+```java
+@Component
+public class TennisCoach implements Coach {
+
+  FortuneService fortuneService;
+
+  public TennisCoach() {}
+
+  @Autowired // this injects into your setter.
+  public void setFortuneService(FortuneService fortuneService) {
+    this.fortuneService = fortuneService;
+  }
+
+  @Override
+  public String getDailyWorkout() {
+    return "Practice your backhand volley.";
+  }
+
+  @Override
+  public String getDailyFortune() {
+    return fortuneService.getFortune();
+  }
+
+}
+```
+
+#### Method Injection
+
+- You can use dependency injection on any method, as well.
+- Just add `@Autowired`.
+
+#### Field Injection
+
+- Yes, fields too!
+- With field injection, you can skip setter methods and place the annotation directly on the field you want to inject.
+  - When Spring creates the object, it will set the field directly using Java Reflection.
+
+```java
+@Component
+public class TennisCoach implements Coach {
+
+  @Autowired
+  private FortuneService fortuneService;
+
+  public TennisCoach() {}
+
+  @Override
+  public String getDailyWorkout() {
+    return "Practice your backhand volley.";
+  }
+
+  @Override
+  public String getDailyFortune() {
+    return fortuneService.getFortune();
+  }
+
+}
+```
+
+### Qualifiers
+
+- When you have more than one option for injection, you can tell Spring which one to use with qualifiers.
+  - If you don't specify one, the compiler will throw an error related to the bean that needs the injection.
+  - `NoUniqueBeanDefinitionException`. Ruh-roh!
+- Luckily, it's pretty easy to do this.
+- Just use the `@Qualifier("beanId")` annotation!
+  - This works fine for Constructor, Setter, and Field injection.
+
+```java
+@Autowired
+@Qualifier("happyFortuneService")
+public void setFortuneService(FortuneService fortuneService) {
+  this.fortuneService = fortuneService;
+}
+```
+
+- When using qualifiers on Constructors, you have to use a different format.
+  - Instead of the `@Qualifier` being prior to the Constructor, like `@Autowired` is, it goes inside the parameter parentheses.
+
+```java
+@Autowired
+public void TennisCoach(@Qualifier("happyFortuneService") FortuneService fortuneService) {
+  this.fortuneService = fortuneService;
+}
+```
+
+### Injecting Values from File
+
+- You can also inject values from a properties file, just like we did with the XML.
+- In this case, setup is all the same,
+  - Add the properties file.
+  - Link to it in your configuration XML.
+  - Use the `@Value` annotation to call the property you want.
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:context="http://www.springframework.org/schema/context"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans
+    http://www.springframework.org/schema/beans/spring-beans.xsd
+    http://www.springframework.org/schema/context
+    http://www.springframework.org/schema/context/spring-context.xsd">
+
+  <!-- entry to enable component scanning -->
+  <context:component-scan base-package="com.technakal.springdemo" />
+
+  <!-- this part links to the config file -->
+  <context:property-placeholder location="sports.properties" />
+
+</beans>
+```
+
+```java
+@Value("${foo.email}")
+private String email;
+
+@Value("${foo.age}")
+private Integer age;
+```
