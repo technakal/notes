@@ -1,5 +1,13 @@
 # Spring and Hibernate
 
+- [Spring and Hibernate](#spring-and-hibernate)
+  - [Setting Up the DEV Environment](#setting-up-the-dev-environment)
+    - [Tomcat](#tomcat)
+      - [Tomcat Session Running Issue](#tomcat-session-running-issue)
+    - [Eclipse](#eclipse)
+    - [Connecting Eclipse to Tomcat](#connecting-eclipse-to-tomcat)
+  - [Installing Spring jar Files](#installing-spring-jar-files)
+
 ## Setting Up the DEV Environment
 
 ### Tomcat
@@ -9,6 +17,18 @@
   - Do the Full installation, and make sure it includes Tomcat as a Windows service.
 - You can start and stop a Tomcat server in the Services.msc program.
 - If the install worked, you can visit localhost:8080 and you should see the default Tomcat welcome page.
+
+#### Tomcat Session Running Issue
+
+- If you run into an issue with the port already being used, you can find out what's using it and, if necessary, force kill it.
+
+```shell
+> netstat -a -o -n
+# find the record for port 8080.
+# take note of its pid
+> taskkill /f /pid {pid}
+# enter the corresponding pid from step 1
+```
 
 ### Eclipse
 

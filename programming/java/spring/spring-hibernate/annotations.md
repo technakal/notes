@@ -20,6 +20,11 @@
       - [Field Injection](#field-injection)
     - [Qualifiers](#qualifiers)
     - [Injecting Values from File](#injecting-values-from-file)
+    - [Scope Annotations](#scope-annotations)
+    - [Bean Lifecycle Methods with Annotations](#bean-lifecycle-methods-with-annotations)
+      - [A Note About Java 9+](#a-note-about-java-9)
+      - [Development Process](#development-process-3)
+      - [Example](#example)
 
 ## Java Annotations
 
@@ -328,4 +333,67 @@ private String email;
 
 @Value("${foo.age}")
 private Integer age;
+```
+
+### Scope Annotations
+
+- You can set Bean Scope using annotations as well.
+  - Reminder: default scope is singleton.
+- To set the scope via annotations, just use `@Scope("scopeName")`.
+
+```java
+// example 1
+@Component
+@Scope("singleton")
+public class TennisCoach implements Coach {
+  // ...
+}
+
+// example 2
+@Component
+@Scope("prototype")
+public class eSportsCoach implements Coach {
+  // ...
+}
+```
+
+### Bean Lifecycle Methods with Annotations
+
+- You can use Bean lifecycle methods via annotations.
+  - As a reminder, this allows you to run code during things like bean creation and bean destruction.
+- Methods used with the annotations must follow these rules:
+  - The method can have any access modifier (public, protected, private)
+  - The method can have any return type. However, "void' is most commonly used. If you give a return type just note that you will not be able to capture the return value. As a result, "void" is commonly used.
+  - The method can have any method name.
+  - The method can not accept any arguments. The method should be no-arg.
+  - As a reminder, beans with `prototype` scope don't call the destroy methods.
+    - Spring doesn't handle the full lifecycle of prototype beans, so it never destroys them.
+    - This applies to XML or annotation configuration.
+    - [More info](https://docs.spring.io/spring/docs/current/spring-framework-reference/core.html#beans-factory-scopes-prototype)
+
+#### A Note About Java 9+
+
+- @PostConstruct and @PreDestroy have been removed from the classpath in Java 9+.
+- To resolve this and use them, you need to add the javax.annotation-api-1.2.jar file to the classpath.
+- Download it here.
+- Add it to your `lib` folder.
+- Import it into your Libraries (via Add JAR option. See [this example](./dev-environment.md#installing-spring-jar-files)).
+
+#### Development Process
+
+- Define init and destroy methods.
+- Add `@PostConstruct` or `@PreDestroy` to the method.
+
+#### Example
+
+```java
+@PostConstruct
+public void doMyStartupStuff() {
+  System.out.println(">> TennisCoach: doing initialization lifecycle method code.");
+}
+
+@PreDestroy
+public void doMyCleanupStuff() {
+  System.out.println(">> TennisCoach: doing pre-destroy lifecycle method code.");
+}
 ```
