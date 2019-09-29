@@ -23,7 +23,7 @@
 - If you run into an issue with the port already being used, you can find out what's using it and, if necessary, force kill it.
 
 ```shell
-> netstat -a -o -n
+> netstat -o -n -a | findstr 0.0:8080
 # find the record for port 8080.
 # take note of its pid
 > taskkill /f /pid {pid}
