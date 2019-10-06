@@ -1,0 +1,184 @@
+# GraphQL in Spring
+
+- [GraphQL in Spring](#graphql-in-spring)
+  - [Overview](#overview)
+    - [Simple GraphQL Example](#simple-graphql-example)
+  - [GraphQL Basics](#graphql-basics)
+    - [Schema](#schema)
+      - [Creating Schemas](#creating-schemas)
+    - [Operations](#operations)
+      - [Queries](#queries)
+      - [Mutations](#mutations)
+    - [Including GraphQL in Spring](#including-graphql-in-spring)
+    - [Configure GraphQL](#configure-graphql)
+  - [GraphiQL](#graphiql)
+    - [Configure GraphiQL](#configure-graphiql)
+  - [Steps to Create GraphQL API Using Spring Boot](#steps-to-create-graphql-api-using-spring-boot)
+
+## Overview
+
+- [GraphQL](https://graphql.org/) is a query language for APIs that describes how to ask for data.
+- It's generally used to load data from a server to a client.
+- It's much more efficient and flexible than a traditional REST API because it allows the calling client to specify exactly what data they want.
+  - Also allows data aggregation on the backend from multiple data stores.
+  - Traditional REST APIs return all data as specified by the developer.
+
+### Simple GraphQL Example
+
+- Here's a simple GraphQL query.
+  - We're calling the `findAllLocations`, and requesting the ID.
+
+```graphql
+{
+  findAllLocations {
+    id
+  }
+}
+```
+
+- And the response data looks like this:
+
+```json
+{
+  "data": {
+    "findAllLocations": [
+      {
+        "id": 1
+      },
+      {
+        "id": 2
+      },
+      {
+        "id": 3
+      }
+    ]
+  }
+}
+```
+
+## GraphQL Basics
+
+### Schema
+
+- The GraphQL schema defines the data points offered via the API.
+- Defines the:
+  - Data types
+  - Relationships between data types
+  - Operations available, such as queries for retrieving data, and mutations for creating, updating, and deleting data.
+- Here's an example schema:
+  - This defines a `Location` data type, creates a `findAllLocations` query, and specifies create, update, and delete mutations on Location.
+
+```graphql
+type Location {
+  id: ID!
+  name: String!
+  address: String!
+}
+
+type Query {
+  findAllLocations: [Location]!
+}
+
+type Mutation {
+  newLocation(name: String!, address: String): Location!
+  deleteLocation(id: ID!): Boolean
+  updateLocationName(newName: String!, id: ID!): Location!
+}
+```
+
+- In a single schema, there can be only one Query and one Mutation blocks.
+- The schema extension is `.graphqls`.
+- [Official Schema Docs](https://graphql.org/learn/schema/)
+
+#### Creating Schemas
+
+### Operations
+
+- GraphQL has two types of Operations: Queries and Mutations.
+- [Official Queries Docs](https://graphql.org/learn/queries/)
+
+#### Queries
+
+- Queries retrieve data.
+- They return a special object.
+- You can do further filtering on that object to only return the data you need, based on the request.
+
+#### Mutations
+
+- Mutations allow the client to manipulate data.
+- Create, update, delete.
+
+### Including GraphQL in Spring
+
+- Dependencies to add to project:
+  - graphql-spring-boot-starter
+    - Does a lot of configuration for you.
+    - Automatically parses schema files in the classpath.
+    - Sets up a POST endpoint.
+  - graphql-java-tools
+    - Helps with schema parsing.
+    - Auto-wires beans for any schema files found on the classpath.
+
+```xml
+<dependency>
+  <groupId>com.graphql-java</groupId>
+  <artifactId>graphql-spring-boot-starter</artifactId>
+  <version>5.0.2</version>
+</dependency>
+<dependency>
+  <groupId>com.graphql-java</groupId>
+  <artifactId>graphql-java-tools</artifactId>
+  <version>5.2.4</version>
+</dependency>
+```
+
+### Configure GraphQL
+
+- In the application.properties file, add the following tags to configure GraphQL.
+- This maps the GraphQl servlet, enables the servlet, and allows CORS.
+
+```
+graphql.servlet.mapping=/graphql
+graphql.servlet.enabled=true
+graphql.servlet.corsEnabled=true
+```
+
+- Note: `graphql.servlet.mapping` must match `graphiql.endpoint`. This is how the two communicate.
+
+## GraphiQL
+
+- A simple tool for testing GraphQL applications and APIs.
+- Add as a dependency in the `pom.xml`.
+  - Version here should match your GraphQL version, I think.
+
+```xml
+<dependency>
+  <groupId>com.graphql-java</groupId>
+  <artifactId>graphiql-spring-boot-starter</artifactId>
+  <version>5.0.2</version>
+</dependency>
+```
+
+- [Github Page](https://github.com/graphql/graphiql)
+
+### Configure GraphiQL
+
+- In the `application.properties` file, configure GraphiQL.
+- This enables GraphiQL, adds its endpoint, and maps it.
+
+```
+graphiql.enabled=true
+graphiql.endpoint=/graphql
+graphiql.mapping=graphiql
+```
+
+- Note: `graphiql.endpoint` must match `graphql.servlet.mapping`. This is how the two communicate.
+
+## Steps to Create GraphQL API Using Spring Boot
+
+- Spring Initializr doesn't have a dependency to auto-import, so you have to import it manually.
+- Create your application.
+- Add the dependencies for GraphQL and GraphQL Tools.
+- Add the dependency for GraphiQL.
+- Configure GraphQL and GraphiQL in `application.properties`.
+- Create your schemas.

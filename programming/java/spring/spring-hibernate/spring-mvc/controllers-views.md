@@ -8,6 +8,7 @@
     - [Return View Name](#return-view-name)
     - [Create View Page](#create-view-page)
       - [Using Static Resources in Views](#using-static-resources-in-views)
+  - [Request Mapping at the Controller Level](#request-mapping-at-the-controller-level)
 
 ## Development Process
 
@@ -114,3 +115,28 @@ public class HomeController {
 
 - You need to use the JSP expression `${pageContext.request.contextPath}` to access the correct root directory for your web application.
   - Apply the same technique for reading CSS and JavaScript.
+
+## Request Mapping at the Controller Level
+
+- You can also create request mappings for the Controller level.
+- These serve as parent mappings for the Controller itself.
+- All of the request mappings on the underlying methods become, then, relative to the parent mapping.
+  - In the example below, we set the controller's "root" level to "/api/".
+  - Each subsequent mapping is in relation to this, so the other two become "/api/getStudent" and "/api/addStudent".
+
+```java
+@Controller
+@RequestMapping("/api")
+public class ApiController {
+
+  @RequestMapping("/getStudent")
+  public String getStudent() {
+    // do something
+  }
+
+  @RequestMapping("/addStudent")
+  public String addStudent() {
+    // do something
+  }
+}
+```
