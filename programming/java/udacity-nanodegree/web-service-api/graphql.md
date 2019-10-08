@@ -5,10 +5,14 @@
     - [Simple GraphQL Example](#simple-graphql-example)
   - [GraphQL Basics](#graphql-basics)
     - [Schema](#schema)
-      - [Creating Schemas](#creating-schemas)
-    - [Operations](#operations)
-      - [Queries](#queries)
-      - [Mutations](#mutations)
+      - [Data Types](#data-types)
+      - [Operations](#operations)
+        - [Queries](#queries)
+        - [Mutations](#mutations)
+      - [Example Schema](#example-schema)
+    - [Resolver](#resolver)
+    - [Mutator](#mutator)
+    - [Exception Handling](#exception-handling)
     - [Including GraphQL in Spring](#including-graphql-in-spring)
     - [Configure GraphQL](#configure-graphql)
   - [GraphiQL](#graphiql)
@@ -60,7 +64,7 @@
 
 ### Schema
 
-- The GraphQL schema defines the data points offered via the API.
+- The GraphQL schema defines the data points and operations offered via the API.
 - Defines the:
   - Data types
   - Relationships between data types
@@ -86,27 +90,174 @@ type Mutation {
 }
 ```
 
-- In a single schema, there can be only one Query and one Mutation blocks.
+- In a single schema, there can be only one root Query and one root Mutation blocks.
 - The schema extension is `.graphqls`.
 - [Official Schema Docs](https://graphql.org/learn/schema/)
 
-#### Creating Schemas
+#### Data Types
 
-### Operations
+- Each data type must be typed.
+  - You can use any scalar types for this.
+  - If you use a complex data type, like a class, it has to correspond exactly to the class you define.
+- You can identify required data points using the `!`.
+- Fields can be arrays, as well.
+  - In GraphQL, you represent an array by wrapping the field in brackets.
+
+```graphql
+type Location {
+  id: ID!
+  name: String!
+  address: String
+}
+
+type Query {
+  findAllLocations: [Location]!
+}
+```
+
+#### Operations
 
 - GraphQL has two types of Operations: Queries and Mutations.
 - [Official Queries Docs](https://graphql.org/learn/queries/)
 
-#### Queries
+##### Queries
 
 - Queries retrieve data.
 - They return a special object.
 - You can do further filtering on that object to only return the data you need, based on the request.
+- Keep in mind, when building your queries, that GraphQL allows the client to specity which fields they want.
+  - So, with GraphQL, you don't need to create a query for every data-filtering scenario you have.
+  - For example, if one use case is to return all Dog names and another to return all Dog breeds, you can accomplish both in your schema by just returning all Dogs. Then, in your client request, you can specify for the first that you only want names, and the second, only breeds.
 
-#### Mutations
+##### Mutations
 
 - Mutations allow the client to manipulate data.
 - Create, update, delete.
+
+#### Example Schema
+
+```graphql
+type WoofWoof {
+  id: ID!
+  name: String!
+  breed: String!
+  origin: String!
+}
+
+type Query {
+  findAllWoofWoofs: [WoofWoof]!
+  findWoofWoofById(id: ID!): WoofWoof
+}
+
+type Mutation {
+  deleteWoofWoofById(id: ID!): Boolean
+  updateWoofWoofName(newName: String!, id: ID!): WoofWoof!
+}
+```
+
+### Resolver
+
+- The resolver handles your queries.
+- The resolver implements the `GraphQLQueryResolver` class.
+- The resolver is flagged as a `@Component` for discoverability.
+- Within the resolver, you wire up your repository to the resolver.
+- You define, within the resolver, the methods in your GraphQL schema `Query` block.
+  - The method names in the resolver must match the method names in your schema.
+
+```java
+@Component
+public class Query implements GraphQLQueryResolver {
+
+  private WoofWoofRepository woofWoofRepository;
+
+  public Query(WoofWoofRepository woofWoofRepository) {
+    this.woofWoofRepository = woofWoofRepository;
+  }
+
+  public Iterable<WoofWoof> findAllWoofWoofs() {
+    return woofWoofRepository.findAll();
+  }
+
+  public Optional<WoofWoof> findWoofWoofById(Long id) {
+    return woofWoofRepository.findById(id);
+  }
+
+}
+```
+
+### Mutator
+
+- The mutator is like the resolver, except it connects your schema mutations with your repository.
+- It implements the `GraphQLMutatorResolver`.
+- It's a component.
+- You define each mutation, making sure the names match the corresponding methods in your schema.
+
+```java
+@Component
+public class Mutation implements GraphQLMutationResolver {
+
+  private WoofWoofRepository woofWoofRepository;
+
+  public Mutation(WoofWoofRepository woofWoofRepository) {
+    this.woofWoofRepository = woofWoofRepository;
+  }
+
+  public WoofWoof createNewWoofWoof(String name, String breed) {
+    WoofWoof woofWoof = new WoofWoof(name, breed);
+    woofWoofRepository.save(woofWoof);
+    return woofWoof;
+  }
+
+  public Boolean deleteWoofWoofById(Long id) {
+    woofWoofRepository.deleteById(id);
+    return true;
+  }
+
+  public WoofWoof updateWoofWoofName(String newName, Long id) {
+    Optional<WoofWoof> optionalWoofWoof = woofWoofRepository.findById(id);
+
+    if(optionalWoofWoof.isPresent()) {
+      WoofWoof woofWoof = optionalWoofWoof.get();
+      woofWoof.setName(newName);
+      woofWoofRepository.save(woofWoof);
+      return woofWoof;
+    } else {
+      throw new WoofWoofNotFoundException("Woof woof not found.", id);
+    }
+  }
+}
+```
+
+### Exception Handling
+
+- GraphQL allows for special handling of GraphQL exceptions.
+- Creating these custom exceptions is like creating normal custom exceptions, with a couple of differences.
+- A custom exception extends the `RuntimeException` class.
+- Then, it implements the `GraphQLError` interface.
+- The `extensions` field, below, is a `GraphQLError` object that allows you to add additional information to your exception before it is sent back to the client.
+  - Here, we're adding the invalid ID.
+
+```java
+public class WoofWoofNotFoundException extends RuntimeException implements GraphQLError {
+
+  private Map<String, Object> extensions = new HashMap<>();
+
+  public WoofWoofNotFoundException(String message, Long invalidId) {
+    super(message);
+    extensions.put("invalidLocationId", invalidId);
+  }
+
+  @Override
+  public List<SourceLocation> getLocations() {
+    return null;
+  }
+
+  @Override
+  public ErrorType getErrorType() {
+    return null;
+  }
+}
+```
 
 ### Including GraphQL in Spring
 
@@ -182,3 +333,4 @@ graphiql.mapping=graphiql
 - Add the dependency for GraphiQL.
 - Configure GraphQL and GraphiQL in `application.properties`.
 - Create your schemas.
+- Create your resolver
