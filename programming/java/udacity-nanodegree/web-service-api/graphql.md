@@ -1,6 +1,8 @@
-# GraphQL in Spring
+# GraphQL
 
-- [GraphQL in Spring](#graphql-in-spring)
+<!-- TOC -->
+
+- [GraphQL](#graphql)
   - [Overview](#overview)
     - [Simple GraphQL Example](#simple-graphql-example)
   - [GraphQL Basics](#graphql-basics)
@@ -13,11 +15,16 @@
     - [Resolver](#resolver)
     - [Mutator](#mutator)
     - [Exception Handling](#exception-handling)
-    - [Including GraphQL in Spring](#including-graphql-in-spring)
+  - [GraphQL in Spring](#graphql-in-spring)
+    - [Development Process](#development-process)
+    - [Dependencies](#dependencies)
     - [Configure GraphQL](#configure-graphql)
-  - [GraphiQL](#graphiql)
+  - [Testing GraphQL](#testing-graphql)
+    - [Postman](#postman)
+    - [GraphiQL](#graphiql)
     - [Configure GraphiQL](#configure-graphiql)
-  - [Steps to Create GraphQL API Using Spring Boot](#steps-to-create-graphql-api-using-spring-boot)
+
+<!-- /TOC -->
 
 ## Overview
 
@@ -259,7 +266,22 @@ public class WoofWoofNotFoundException extends RuntimeException implements Graph
 }
 ```
 
-### Including GraphQL in Spring
+## GraphQL in Spring
+
+### Development Process
+
+- Spring Initializr doesn't have a dependency to auto-import, so you have to import it manually.
+- Create your application.
+- Add the dependencies for GraphQL and GraphQL Tools.
+- Add the dependency for GraphiQL.
+- Configure GraphQL and GraphiQL in `application.properties`.
+- Create your schemas.
+- Create your resolver.
+- Create your mutator.
+- Create your exception handlers.
+- Launch and test!
+
+### Dependencies
 
 - Dependencies to add to project:
   - graphql-spring-boot-starter
@@ -288,7 +310,7 @@ public class WoofWoofNotFoundException extends RuntimeException implements Graph
 - In the application.properties file, add the following tags to configure GraphQL.
 - This maps the GraphQl servlet, enables the servlet, and allows CORS.
 
-```
+```text
 graphql.servlet.mapping=/graphql
 graphql.servlet.enabled=true
 graphql.servlet.corsEnabled=true
@@ -296,8 +318,24 @@ graphql.servlet.corsEnabled=true
 
 - Note: `graphql.servlet.mapping` must match `graphiql.endpoint`. This is how the two communicate.
 
-## GraphiQL
+## Testing GraphQL
 
+### Postman
+
+- You can test GraphQL through Postman.
+- Here are the pertinent details:
+  - Create a POST request to the /graphql endpoint.
+    - So, if you're on localhost, `http://localhost:8080/graphql`
+  - Set `content-type` of the request to `application/json`.
+  - Set the body to GraphQL.
+    - You can also use JSON, if you prefer, but GraphQL syntax is cleaner to read.
+  - Add your query to the body.
+  - Hit Send!
+
+### GraphiQL
+
+- Another popular method for testing GraphQL is GraphiQL.
+  - You bake this right into your application.
 - A simple tool for testing GraphQL applications and APIs.
 - Add as a dependency in the `pom.xml`.
   - Version here should match your GraphQL version, I think.
@@ -317,20 +355,10 @@ graphql.servlet.corsEnabled=true
 - In the `application.properties` file, configure GraphiQL.
 - This enables GraphiQL, adds its endpoint, and maps it.
 
-```
+```text
 graphiql.enabled=true
 graphiql.endpoint=/graphql
 graphiql.mapping=graphiql
 ```
 
 - Note: `graphiql.endpoint` must match `graphql.servlet.mapping`. This is how the two communicate.
-
-## Steps to Create GraphQL API Using Spring Boot
-
-- Spring Initializr doesn't have a dependency to auto-import, so you have to import it manually.
-- Create your application.
-- Add the dependencies for GraphQL and GraphQL Tools.
-- Add the dependency for GraphiQL.
-- Configure GraphQL and GraphiQL in `application.properties`.
-- Create your schemas.
-- Create your resolver
