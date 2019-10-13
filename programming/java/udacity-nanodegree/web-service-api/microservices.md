@@ -6,10 +6,20 @@
   - [Overview](#overview)
   - [Eureka](#eureka)
     - [Eureka Architecture](#eureka-architecture)
+  - [Spring Data REST](#spring-data-rest)
+    - [How It Works](#how-it-works)
+      - [An Example](#an-example)
+    - [Adding to Project](#adding-to-project)
   - [Developing Microservices Using Spring Boot](#developing-microservices-using-spring-boot)
+    - [Structure](#structure)
     - [Eureka POM.xml](#eureka-pomxml)
     - [Eureka Properties File](#eureka-properties-file)
     - [The Eureka Application File](#the-eureka-application-file)
+    - [Install Process](#install-process)
+      - [Spring Initializr](#spring-initializr)
+  - [Registering Microservices in Eureka](#registering-microservices-in-eureka)
+    - [Dependencies](#dependencies)
+    - [Configuring Application Properties](#configuring-application-properties)
 
 <!-- /TOC -->
 
@@ -55,7 +65,76 @@
   - The Eureka client performs the actual registration of a microservice.
   - The Eureka server remembers the microservices--it remembers the registration.
 
+## Spring Data REST
+
+- Spring Data REST makes it super easy to expose microservices.
+- There is no boilerplate code, and reduced annotation requirements.
+- Doesn't require a controller or a service.
+- It's real slick.
+
+### How It Works
+
+- At application startup, Spring Data Rest finds all of the spring data repositories
+- Then, Spring Data Rest creates an endpoint that matches the entity name
+- Next, Spring Data Rest appends an S to the entity name in the endpoint
+- Lastly, Spring Data Rest exposes CRUD (Create, Read, Update, and Delete) operations as RESTful APIs over HTTP
+
+#### An Example
+
+- Imagine we have an ItemRepository.
+
+```java
+public interface ItemRepository extends JpaRepository<Item, Integer> { ... }
+```
+
+- Spring Data REST automatically creates an endpoint for this repository, derived from the plural version of the class name--Item.
+
+```text
+http://localhost:8080/items
+```
+
+- Spring Data REST also automatically creates an endpoint for retrieving a specific item:
+
+```text
+http://localhost:8080/items/{id}
+```
+
+### Adding to Project
+
+- Add the dependency for Spring Data REST to the pom file.
+
+```xml
+<dependency>
+  <groupId>org.springframework.boot</groupId>
+  <artifactId>spring-boot-starter-data-rest</artifactId>
+</dependency>
+```
+
 ## Developing Microservices Using Spring Boot
+
+### Structure
+
+- Eureka projects are multiple-module projects.
+  - There's a module for the Eureka server, and another for each microservice.
+- If you open them all at once in IntelliJ, it's a little tricky getting anything running.
+- Here's the folder structure in my multi-module project;
+
+```txt
+master
+    |-eureka
+           |-src
+               |-main
+                    |-java
+                          |-com.technakal.eureka
+    |-items
+          |-src
+               |-main
+                    |-java
+                          |-com.technakal.microservices
+
+```
+
+- So, basically, you duplicate the folder structure for a single project into _each_ module.
 
 ### Eureka POM.xml
 
@@ -73,6 +152,16 @@
 <dependency>
   <groupId>org.springframework.cloud</groupId>
   <artifactId>spring-cloud-netflix-eureka-server</artifactId>
+</dependency>
+```
+
+- You may also need to add the following dependency:
+
+```xml
+<dependency>
+  <groupId>javax.xml.bind</groupId>
+  <artifactId>jaxb-api</artifactId>
+  <version>2.4.0-b180725.0427</version>
 </dependency>
 ```
 
@@ -113,4 +202,91 @@ public class EurekaApplication {
 
 }
 
+```
+
+### Install Process
+
+- Download starter code.
+- Open in IntelliJ.
+  - You'll get an error about loading Facets. This is because you're not using IntelliJ Ultimate.
+- Add your Java XML Bind dependency to your pom.xml.
+  - I just added it to the Eureka file.
+- Set the `eureka/src/main/java` as a Sources Root.
+  - Right click on the folder and select Mark Directory As > Sources Root.
+- Open File > Project Structure.
+- Make sure you have a valid JDK applied.
+- Import all Maven dependencies.
+  - If IntelliJ won't register your app to Maven by default, you can right click on your
+- Run the package process on your eureka folder.
+- Now you should be able to run `EurekaApplication.main()` as normal.
+
+#### Spring Initializr
+
+- You can use Spring Initializr to bootstrap your Eureka Server.
+  - Just use the dependencies for `Config Client` and `Eureka Server`.
+  - You still may need the `jaxb-api` dependency.
+- You'll still need to set up your `application.properties` and add your `@EnableEurekaServer` annotation.
+
+## Registering Microservices in Eureka
+
+- Registration of the microservice takes full advantage of the Eureka architecture.
+  - Without registration, the microservice can't be discovered, and clients must use the full host-name and IP to call the service.
+- To register a microservice with the discovery server (Eureka), we need to add the Spring Discovery Client dependency.
+- Then, we flag the main application class with the `@EnableEurekaClient` annotation.
+  - This is optional if you add the dependency `spring-cloud-starter-netflix-eureka-client` to the classpath.
+
+### Dependencies
+
+- Here are the dependencies needed to register the microservice with Eureka.
+- `spring-cloud-starter-netflix-eureka-client`
+  - This allows the client to auto-register.
+
+```xml
+<dependency>
+  <groupId>org.springframework.cloud</groupId>
+  <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+  <version>2.1.3.RELEASE</version>
+</dependency>
+```
+
+- `spring-cloud-starter-config`
+
+```xml
+<dependency>
+  <groupId>org.springframework.cloud</groupId>
+  <artifactId>spring-cloud-starter-config</artifactId>
+  <version>2.1.3.RELEASE</version>
+</dependency>
+```
+
+- Additionally, in the `<dependencyManagement>` tag, you'll need to add the `spring-cloud-starter-parent` dependency.
+- I've included the full tag here, since it's new to me.
+
+```xml
+<dependencyManagement>
+  <dependencies>
+    <dependency>
+      <groupId>org.springframework.cloud</groupId>
+      <artifactId>spring-cloud-starter-parent</artifactId>
+      <version>Greenwich.RELEASE</version>
+      <type>pom</type>
+      <scope>import</scope>
+    </dependency>
+  </dependencies>
+</dependencyManagement>
+```
+
+### Configuring Application Properties
+
+- In `application.properties` add the following configuration details:
+  - application.name uniquely identifies the client in the list of registered applications.
+  - server.port sets up the server port.
+  - eureka.client.serviceUrl adds where to access the service.
+
+```text
+spring.application.name=item-service
+server.port=8762
+eureka.client.serviceUrl.defaultZone=http://localhost:8761/eureka/
+eureka.client.service-url.default-zone=http://localhost:8761/eureka/
+instance.preferIpAddress=true
 ```
