@@ -244,7 +244,7 @@ public class WoofWoofNotFoundException extends RuntimeException implements Graph
 
   public WoofWoofNotFoundException(String message, Long invalidId) {
     super(message);
-    extensions.put("invalidLocationId", invalidId);
+    extensions.put("invalidId", invalidId);
   }
 
   @Override
