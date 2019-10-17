@@ -20,6 +20,8 @@
   - [Registering Microservices in Eureka](#registering-microservices-in-eureka)
     - [Dependencies](#dependencies)
     - [Configuring Application Properties](#configuring-application-properties)
+    - [Setting Applicatin Module to Eureka Client](#setting-applicatin-module-to-eureka-client)
+    - [Troubleshooting Discoverability](#troubleshooting-discoverability)
 
 <!-- /TOC -->
 
@@ -151,7 +153,7 @@ master
 </dependency>
 <dependency>
   <groupId>org.springframework.cloud</groupId>
-  <artifactId>spring-cloud-netflix-eureka-server</artifactId>
+  <artifactId>spring-cloud-starter-netflix-eureka-server</artifactId>
 </dependency>
 ```
 
@@ -289,4 +291,38 @@ server.port=8762
 eureka.client.serviceUrl.defaultZone=http://localhost:8761/eureka/
 eureka.client.service-url.default-zone=http://localhost:8761/eureka/
 instance.preferIpAddress=true
+```
+
+### Setting Applicatin Module to Eureka Client
+
+```java
+package com.technakal.dog;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+import org.springframework.cloud.netflix.eureka.EnableEurekaClient;
+
+@SpringBootApplication
+@EnableEurekaClient
+public class DogApplication {
+
+public static void main(String[] args) {
+  SpringApplication.run(DogApplication.class, args);
+}
+
+}
+
+```
+
+### Troubleshooting Discoverability
+
+- It seems like getting the POM just right is crucial for discoverability.
+  - I believe the Eureka POM was causing me the most problems. Copy from an earlier version.
+- If you see repeated console errors for your microservice like the item below, add the value below to the `application.properties` of the microservice.
+  - Error: `com.netflix.discovery.shared.transport.TransportException: Cannot execute request on any known server`
+
+```text
+eureka.client.register-with-eureka=false
+eureka.client.fetch-registry=false
 ```
