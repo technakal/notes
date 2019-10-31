@@ -90,6 +90,5 @@
 3. Load and configure Spring MVC config files.
 4. Create your `/WEB-INF/view/` directory.
    1. This will store our view templates.
-5.
 
 ## Java Source Code Setup Process
