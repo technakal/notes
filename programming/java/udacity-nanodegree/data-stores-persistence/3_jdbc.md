@@ -111,6 +111,41 @@ try(ResultSet result = stmt.executeQuery("select * from animals order by name"))
 }
 ```
 
+### Putting it All Together
+
+```java
+public class JDBCPrimer {
+  public static String buildUri(String baseUri, String user, String pass) {
+    return baseUri + "?user=" + user + "&password=" + pass;
+  }
+
+  public static void main(String[] args) {
+    String uri = "jdbc:mysql://localhost/jdndc3";
+    String user = "root";
+    String pass = "u8nIs42UCfGWqk9p2IA4";
+    try(Connection conn = DriverManager.getConnection(buildUri(uri, user, pass))) {
+      System.out.println("Connected to the database.");
+      System.out.println(conn.getMetaData().getDatabaseProductName());
+      try(Statement stmt = conn.createStatement()) {
+        try(ResultSet result = stmt.executeQuery("select * from members order by join_date desc")) {
+          System.out.println("Executing select query...");
+          while(result.next()) {
+            String username = result.getString("username");
+            Date joinDate = result.getDate("join_date");
+            System.out.println("Username " + username + " joined on " + joinDate + ".");
+          }
+        }
+      }
+    } catch (SQLException e) {
+      System.out.println("SQL error: " + e.getMessage());
+      System.out.println("SQL state: " + e.getSQLState());
+      System.out.println("Vendor error: " + e.getErrorCode());
+      e.printStackTrace();
+    }
+  }
+}
+```
+
 ## Transactions
 
 - JDBC allows you to specify when data is committed to the database using Transactions.
