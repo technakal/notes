@@ -219,8 +219,139 @@ private static void readOrder(Integer orderId, EntityManagerFactory factory) {
 }
 ```
 
+### Entity Relationships
+
+- Entities can be related to other entities, just like tables can be related.
+- To map the Entity relationship in JPA, you use special annotations that denote the type of relationship (one-to-one, one-to-many, many-to-many).
+- One-to-one relationships use the `@OneToOne` annotation.
+  - Each entity instance is related to a single instance of another entity.
+
+```java
+
+```
+
+- One-to-many relationships use the `@OneToMany` annotation.
+  - An entity instance can be related to multiple instances of the other entities.
+
+```java
+
+```
+
+- Many-to-one relationships use the `@ManyToOne` annotation.
+  - Multiple instances of an entity can be related to a single instance of the other entity.
+
+```java
+
+```
+
+- Many-to-many relationships use the `@ManyToMany` annotation.
+  - The entity instances can be related to multiple instances of each other.
+
+```java
+// On the books side of the relationship
+@Entity
+@Table(name = "books")
+public class Book {
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Integer bookId;
+
+  @Column(name = "title")
+  private String title;
+
+  @Column(name = "isbn")
+  private String isbn;
+
+  @ManyToMany
+  @JoinTable(name = "book_author", joinColumns = @JoinColumn(name = "bookId"), inverseJoinColumns = @JoinColumn(name = "authorId"))
+  private List<Author> authors;
+
+}
+
+// On the author side of the relationship
+@Entity
+@Table(name = "authors")
+public class Author {
+
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Integer authorId;
+
+  @Column(name = "name")
+  private String name;
+
+  @ManyToMany(mappedBy = "authors")
+  private List<Book> books;
+
+}
+```
+
+- With all of these annotations, you also need to specify how the tables containing the entities are related, using the `@JoinTable` annotation.
+
+#### Relationship Direction
+
+- The direction of a relationship can be either bidirectional or unidirectional.
+- In a bidirectional relationship, each entity has a relationship field or property that refers to the other entity.
+  - Bidirectional relationships have an owning and an inverse side.
+  - Through the relationship field or property, an entity class’s code can access its related object.
+  - If an entity has a related field, the entity is said to “know” about its related object.
+  - The inverse side of a bidirectional relationship must refer to its owning side by using the `mappedBy` element of the `@OneToOne`, `@OneToMany`, or `@ManyToMany` annotation.
+    - The mappedBy element designates the property or field in the entity that is the owner of the relationship.
+    - Many-to-one bidirectional relationships don't require the `mappedBy` element because the many side is _always_ the owning side.
+    - For one-to-one bidirectional relationships, the owning side corresponds to the side that contains the corresponding foreign key.
+    - For many-to-many bidirectional relationships, either side may be the owning side.
+  - In a unidirectional relationship, only one entity is aware of the other.
+    - Only one entity has a field or property that identifies the relationship.
+
+#### Relational Codepence
+
+- Sometimes, relationships are codependent.
+  - For example, an OrderItem can't exist without an Order.
+- It makes sense that such entities persist together.
+- JPA offers methods of persisting codependent entities together, with one persist command.
+
+##### Cascading
+
+- This is called cascading.
+- To use cascading, use the `CascadeType` of the persistence api.
+  - The `CascadeType` has a number of settings;
+    - ALL
+      - Executes all of the other cascade processes (DETACH, MERGE, PERSIST, REFRESH, REMOVE).
+    - DETACH
+      - If the parent entity is detached from the persistence context, the related entity will detach as well.
+    - MERGE
+      - If the parent entity is merged into the persistence context, the related entity will merge as well.
+    - PERSIST
+      - If the parent entity is persisted in the persistence context, the related entity will persist as well.
+    - REFRESH
+      - If the parent entity is refreshed in the persistence context, the related entity will be refreshed as well.
+    - REMOVE
+      - If the parent entity is removed from the persistence context, the related entity will be removed as well.
+      - This is apparently used for the delete operation.
+      - When REMOVE is used, orphans can remain. To remove orphans, use the `orphanRemoval="true"` option
+
+```java
+@OneToMany(cascade = REMOVE, mappedBy = "customer", orphanRemoval = "true")
+public Set<Order> getOrders() {
+  return orders;
+}
+```
+
+#### Fetching
+
+- Just like you can couple items for cascading, you can also couple them for retrieval.
+  - For example, you can set your application to retrieve all related OrderItems when you retrieve their parent Order.
+- This is done via the `FetchType` option.
+- By default, `FetchType` is set to LAZY.
+- Setting `FetchType to EAGER makes it always return the related entity.
+
 ## Getting Started with JPA
 
+- Configure your pom file with necessary dependencies.
+  - mysql-connector-java
+  - javax.persistence-api
+  - hibernate-core
+  - jaxb-api
 - Create a `persistence.xml` file and add it to the classpath.
   - In the file, you'll define your connection variables and identify your entities.
   - Here's a [good resource](https://thoughts-on-java.org/jpa-persistence-xml/) on configuring the `persistence.xml`, with information on each element, and other configuration settings you can use.
@@ -242,4 +373,21 @@ private static void readOrder(Integer orderId, EntityManagerFactory factory) {
 </persistence>
 ```
 
-- Build your entity class.
+- Create a `hibernate.properties` file.
+  - Here's another example:
+
+```text
+hibernate.bytecode.use_reflection_optimizer=false
+hibernate.connection.driver_class=com.mysql.jdbc.Driver
+hibernate.connection.url=jdbc:mysql://localhost/jdndc3
+hibernate.connection.username=root
+hibernate.connection.password=u8nIs42UCfGWqk9p2IA4
+hibernate.dialect=org.hibernate.dialect.MySQLDialect
+show_sql=true
+format_sql=true
+use_sql_comments=true
+```
+
+- Build your entity class(es).
+- Build your calling classes.
+  - These should use the `EntityManagerFactory` and `EntityManager` classes.
