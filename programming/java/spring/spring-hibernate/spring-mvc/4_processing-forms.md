@@ -6,6 +6,7 @@
   - User accesses form URI.
   - Spring MVC controller gets the request and returns the form view.
   - User fills out the form and submits.
+    - The `action` parameter of the `<form>` tag corresponds to the `@RequestMapping` value of the processing method.
   - Spring MVC controller gets the new request and returns the result view.
 
 ```

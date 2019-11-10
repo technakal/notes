@@ -1,5 +1,7 @@
 # Spring MVC Controllers and Views
 
+<!-- TOC -->
+
 - [Spring MVC Controllers and Views](#spring-mvc-controllers-and-views)
   - [Development Process](#development-process)
     - [Defining the Controller Class](#defining-the-controller-class)
@@ -7,8 +9,10 @@
     - [Add Request Mapping](#add-request-mapping)
     - [Return View Name](#return-view-name)
     - [Create View Page](#create-view-page)
-      - [Using Static Resources in Views](#using-static-resources-in-views)
+      - [[Using Static Resources in Views](https://www.udemy.com/course/spring-hibernate-tutorial/learn/lecture/5608584#overview)](#using-static-resources-in-viewshttpswwwudemycomcoursespring-hibernate-tutoriallearnlecture5608584overview)
   - [Request Mapping at the Controller Level](#request-mapping-at-the-controller-level)
+
+<!-- /TOC -->
 
 ## Development Process
 
@@ -92,7 +96,7 @@ public class HomeController {
 - Create the corresponding View page to go with our Controller method.
   - In this example, it's main-menu.jsp.
 
-#### Using Static Resources in Views
+#### [Using Static Resources in Views](https://www.udemy.com/course/spring-hibernate-tutorial/learn/lecture/5608584#overview)
 
 - Here are the steps on how to access static resources in a Spring MVC.
   - For example, you can use this to access images, css, JavaScript files, etc.

@@ -1,11 +1,15 @@
 # Spring MVC
 
+<!-- TOC -->
+
 - [Spring MVC](#spring-mvc)
   - [Overview](#overview)
   - [Benefits of Using Spring MVC](#benefits-of-using-spring-mvc)
   - [Behind the Scenes](#behind-the-scenes)
     - [Components of Spring MVC Application](#components-of-spring-mvc-application)
     - [How It Works](#how-it-works)
+
+<!-- /TOC -->
 
 ## Overview
 

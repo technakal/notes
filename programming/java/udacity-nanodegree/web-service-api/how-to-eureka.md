@@ -78,11 +78,12 @@
 
 ### Configure Eureka Properties
 
-- Name your server.
-- Declare the server port.
-  - Typically 8761.
-- Prevent Eureka from registering itself as a service.
-- Turn on logging, if you want it.
+- In `application.properties`:
+  - Name your server.
+  - Declare the server port.
+    - Typically 8761.
+  - Prevent Eureka from registering itself as a service.
+  - Turn on logging, if you want it.
 
 ```text
 #configure server

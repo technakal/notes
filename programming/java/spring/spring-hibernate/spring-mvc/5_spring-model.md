@@ -28,6 +28,8 @@
   - We intercept the request and manipulate its paramater.
   - We add the updated parameter into our model.
   - We return a view that uses that model data.
+    - When using the model data, we can access the value directly using the `${}` syntax. In this case, we don't have to access any precursor object--just the name of the model attribute we want.
+      - I.e. `${message}`
 
 ```java
 @Controller
