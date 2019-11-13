@@ -10,6 +10,7 @@
 - Must complete, and not take an infinite amount of time. :watch:
 
 ## Good Algorithms
+
 - Good algorithms are measured by correctness and efficiency.
   - An algorithm can't be good if it isn't correct. That is, if it doesn't produce a consistent result, or doesn't terminate.
 - Efficency is measured by time and space:
@@ -18,11 +19,13 @@
     - [Tail call](https://stackoverflow.com/a/310980/1071846) - a call, inside a function, to the same function itself as the last operation. Also called tail recursion.
 
 ### Measuring Good
+
 - Order of growth - a measure of how much the time taken to execute operations increases as the input size increases.
 - Big O - a theoretical definition of the complexity of an algorithm as a function of the size.
 - Average runtime efficiency.
 
 ## Types of Searches
+
 - Linear Search
   - Progresses sequentially through a list until it finds the target value.
   - List doesn't need to be sorted.
@@ -33,6 +36,7 @@
   - Efficient.
 
 ## Big O Notation
+
 - Constant Time - O(1): The runtime of the algorithm is independent of the size of the data set. If n is 1 or 1 million it takes the same amount of time to execute the algorithm.
 - Logarithmic Time - O(log n): The runtime of the algorithm increases logarithmically as the size of the data set increases.
 - Linear Time - O(n): The runtime of the algorithm is directly proportional to the size of the data set.
