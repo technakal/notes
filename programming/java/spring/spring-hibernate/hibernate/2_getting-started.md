@@ -98,6 +98,8 @@ public class TestJDBC {
 - With annotations on a class, we're doing two things:
   - Mapping the class to a database table.
   - Mapping each field to a table column.
+- Note: For these annotations below, you'll want to use the `javax.persistence` package, not the `org.hibernate` package.
+  - This is the recommended best practice of the Hibernate team. Their packages implement the interfaces created by `javax.persistence`, and `javax.persistence` is the standard.
 
 ### Mapping to a Database Table
 
@@ -139,3 +141,82 @@ public class Student {
 
 }
 ```
+
+## Using Entities
+
+- Two important objects in Hibernate implementations are the `SessionFactory` and `Session`.
+- `SessionFactory`
+  - Reads Hibernate config.
+  - Creates `Session` objects.
+  - Only create once per application.
+    - Heavy-weight object.
+- `Session`
+  - Wraps a JDBC connection.
+  - Main object for interacting with database.
+  - Short-lived object.
+    - Use, then throw away.
+  - Created by the `SessionFactory`.
+
+```java
+public static void main(String[] args) {
+
+  SessionFactory factory = new Configuration()
+    .configure("hibernate.cfg.xml") // if your file is named "hibernate.cfg.xml", you can omit that argument and just call .configure()
+    .addAnnotatedClass(Student.class)
+    .buildSessionFactory();
+
+  Session session = factory.getCurrentSession();
+
+  try {
+
+    // create the student object
+    Student tempStudent = new Student("John", "Paul", "jp@email.com");
+
+    // start the session
+    session.beginTransaction();
+
+    // save the student
+    session.save(tempStudent);
+
+    // commit the transaction
+    session.getTransaction().commit();
+
+  } finally {
+
+    factory.close();
+
+  }
+
+}
+```
+
+## Primary Keys
+
+- `@Id` marks an entity field as the primary key.
+- You can let hibernate decide how to assign the key, or you can tell it explicitly how to generate it.
+  - If you don't add a generation type, it'll use the appropriate method of your database implementation.
+  - If you want to be explicit, you can use the `@GeneratedValue(strategy = GenerationType.X)` annotation.
+
+```java
+// implicit
+@Id
+@Column(name = "id")
+private int id;
+
+// explicit
+@Id
+@GenerationType(strategy = GenerationType.IDENTITY)
+@Column(name = "id")
+private int id;
+```
+
+### Types of Generation Strategies
+
+- AUTO
+  - Hibernate selects the appropriate strategy, based on the database.
+- IDENTITY
+  - Assigns the primary key using the IDENTITY column of the database.
+- SEQUENCE
+  - Assigns the primary key using a database sequence
+- TABLE
+  - Assigns the primary key using an underlying table to ensure uniqueness.
