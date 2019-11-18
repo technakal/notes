@@ -1,5 +1,24 @@
 # Getting Started with JDBC
 
+<!-- TOC -->
+
+- [Getting Started with JDBC](#getting-started-with-jdbc)
+  - [Overview](#overview)
+  - [Installing Hibernate](#installing-hibernate)
+  - [Using JDBC](#using-jdbc)
+  - [Using Hibernate](#using-hibernate)
+    - [Development Process](#development-process)
+    - [Hibernate Configuration File](#hibernate-configuration-file)
+      - [Logging Additional SQL Content](#logging-additional-sql-content)
+  - [Hibernate Annotations](#hibernate-annotations)
+    - [Mapping to a Database Table](#mapping-to-a-database-table)
+    - [Mapping Fields to Columns](#mapping-fields-to-columns)
+  - [Using Entities](#using-entities)
+  - [Primary Keys](#primary-keys)
+    - [Types of Generation Strategies](#types-of-generation-strategies)
+
+<!-- /TOC -->
+
 ## Overview
 
 - To use JDBC and Hibernate, you have to include the required Hibernate files.
@@ -9,6 +28,7 @@
 ## Installing Hibernate
 
 - If you're not using Maven, you can add the necessary files directly to the `lib` of your project, then import them onto the classpath.
+  - `lib/` goes in the root directory.
   - To do this in eclipse, right click the solution name and select Properties > Java Build Path > Libraries > Add JARs.
 - Once you have Hibernate and your JDBC connector on the class path, you can use them.
 
@@ -58,6 +78,7 @@ public class TestJDBC {
 ### Hibernate Configuration File
 
 - The configuration file defines connection values and details to allow Hibernate to talk to the database.
+  - File goes in the `src/` directory.
 - It can be written as an XML file or as a .properties file.
 - Most of these configuration details are pretty self-explanatory, so I only have notes on the weird ones:
   - `connection.pool_size`
@@ -90,6 +111,12 @@ public class TestJDBC {
 ```
 
 - There are other configuration details, but these are the basics for getting started.
+
+#### Logging Additional SQL Content
+
+- Hibernate logs some details if the `show_sql` option is set to true.
+- However, for more logging, you'll need something like `log4j`.
+- Here is a [tutorial](https://www.udemy.com/course/spring-hibernate-tutorial/learn/lecture/5835894#overview) to set up additional logging with `log4j`.
 
 ## Hibernate Annotations
 
@@ -220,3 +247,7 @@ private int id;
   - Assigns the primary key using a database sequence
 - TABLE
   - Assigns the primary key using an underlying table to ensure uniqueness.
+- Custom
+  - You can also generate your own custom identity generator using Java code.
+  - Create an implementation of the `org.hibernate.id.IdentifierGenerator`.
+  - Within this, override the `Serializable generator` method.
