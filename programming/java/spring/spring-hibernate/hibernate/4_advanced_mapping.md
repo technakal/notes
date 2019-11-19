@@ -11,6 +11,8 @@
       - [One To One Unidirectional](#one-to-one-unidirectional)
       - [One to One Bidirectional](#one-to-one-bidirectional)
     - [One To Many Mapping](#one-to-many-mapping)
+      - [One To Many Bidirectional](#one-to-many-bidirectional)
+      - [One to Many Unidirectional](#one-to-many-unidirectional)
     - [Many to One Mapping](#many-to-one-mapping)
     - [Many to Many Mapping](#many-to-many-mapping)
   - [Database Setup](#database-setup)
@@ -125,7 +127,7 @@ public class CreateDemo {
     // create session factory
     SessionFactory factory = new Configuration()
       .configure("hibernate.cfg.xml")
-      .addAnnotatedClass(Instructor.class)
+      .addAnnotatedClass(Instructor.class) // note that we add all of the necessary managed classes here by stringing multiple instances of the addAnnotatedClass
       .addAnnotatedClass(InstructorDetail.class)
       .buildSessionFactory();
 
@@ -162,7 +164,14 @@ public class CreateDemo {
       session.getTransaction().commit();
       System.out.println( "Instructor and details saved..." );
 
+    } catch(Exception e) {
+
+      e.printStackTrace();
+
     } finally {
+
+      // close session
+      session.close();
 
       // close factory
       factory.close();
@@ -178,6 +187,24 @@ public class CreateDemo {
 
 #### One to One Bidirectional
 
+- If we want to be able to load either entity in a relationship and pull the other, we need to set up a bidirectional relationship.
+  - Basically, you'll just configure both sides of the relationship with the `@OneToOne` annotation.
+  - However, with the entity that _does not_ define the relationship, you'll use the `mappedBy` property on the `@OneToOne` annotation.
+  - `mappedBy` identifies the _Java field_ in the defining entity that establishes the relationship between the two.
+- You can also define cascade separately on the secondary entity.
+
+```java
+@Entity
+@Table(name = "instructor_detail")
+public InstructorDetail {
+
+  @OneToOne(mappedBy = "instructorDetail", // points to the Instructor.instructorDetail field
+            cascade = CascadeType.ALL) // set up the cascade type on this guy too.
+  private Instructor instructor;
+
+}
+```
+
 ### One To Many Mapping
 
 - One to many means the left-hand entity can be related to multiple of the right-hand entity.
@@ -187,6 +214,10 @@ public class CreateDemo {
 
 ![One to Many Relationship](./one-to-many.png)
 
+#### One To Many Bidirectional
+
+#### One to Many Unidirectional
+
 ### Many to One Mapping
 
 - Many to one means the left-hand entity can be related to one right-hand entity, but the right-hand entity can be related to multiple left-hand entities.
@@ -194,6 +225,8 @@ public class CreateDemo {
   - A Course can have only one Instructor, but multiple Courses could have the same Instructor.
 
 ![Many to One Relationship](./many-to-one.png)
+
+- Because `@OneToMany` and `@ManyToOne` are interrelated, I've placed the `@ManyToOne` examples in the [`@OneToMany` section](#one-to-many-mapping).
 
 ### Many to Many Mapping
 

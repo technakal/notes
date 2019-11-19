@@ -40,8 +40,16 @@ public static void main(String[] args) {
     // commit the transaction
     session.getTransaction().commit();
 
+  } catch(Exception e) {
+
+    e.printStackTrace();
+
   } finally {
 
+    // close session
+    session.close();
+
+    // close factory
     factory.close();
 
   }
@@ -177,4 +185,12 @@ session.createQuery("delete from Student where id = 1")
       .executeUpdate();
 
 session.getTransaction().commit();
+```
+
+- When deleting related entities, if your cascade type doesn't include REMOVE, you'll have to manually break the relationship between the two entities before running the `delete()` method.
+  - Note that, below, the CascadeType does not include REMOVE.
+
+```java
+instructorDetail.getInstructor().setInstructorDetail( null ); // removes the link
+session.delete(instructorDetail);
 ```

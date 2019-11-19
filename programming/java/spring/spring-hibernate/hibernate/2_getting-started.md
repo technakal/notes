@@ -208,8 +208,16 @@ public static void main(String[] args) {
     // commit the transaction
     session.getTransaction().commit();
 
+  } catch(Exception e) {
+
+    e.printStackTrace();
+
   } finally {
 
+    // close session
+    session.close();
+
+    // close factory
     factory.close();
 
   }
