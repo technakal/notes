@@ -19,8 +19,9 @@
     - [Primary and Foreign Keys](#primary-and-foreign-keys)
     - [Cascading](#cascading)
       - [Configuring Cascade Type](#configuring-cascade-type)
-    - [Lazy Loading](#lazy-loading)
-      - [Directionality](#directionality)
+    - [Fetch Type](#fetch-type)
+      - [Lazy Loading](#lazy-loading)
+    - [Directionality](#directionality)
 
 <!-- /TOC -->
 
@@ -216,6 +217,70 @@ public InstructorDetail {
 
 #### One To Many Bidirectional
 
+- Not sure if you can go each way, but choose one of your entities to own the relationship.
+- On this entity, add the `@OneToMany` or `@ManyToOne` annotation, depending on how their side of the relationship looks.
+- Configure their `@JoinColumn` and cascading.
+- Now, on the other entity--the related one--add a field to capture the relationship.
+- Annotate this field with the `@OneToMany` or `@ManyToOne` annotation, depending on their side.
+- Add the `mappedBy` property to this annotation, and point it at the defining field on the other entity.
+- Configure your cascading.
+- Now, on your session factory, make sure you've added _all_ of the related classes as separate calls to the `addAnnotatedClass`.
+
+```java
+// course defines the relationship
+@Entity
+@Table(name = "course")
+public class Course {
+
+  // more code
+
+  @ManyToOne(cascade = {
+    CascadeType.PERSIST,
+    CascadeType.REFRESH,
+    CascadeType.MERGE,
+    CascadeType.DETACH
+  })
+  @JoinColumn(name = "instructor_id")
+  private Instructor instructor;
+
+  // more code
+}
+
+// instructor
+@Entity
+@Table(name = "instructor")
+public class Instructor {
+
+  // code
+
+  @OneToMany(mappedBy = 'instructor',
+            cascade = {
+              CascadeType.PERSIST,
+              CascadeType.REFRESH,
+              CascadeType.MERGE,
+              CascadeType.DETACH,
+            })
+  private List<Course> courses;
+
+  // more code
+}
+
+// main application
+public static void main(String[] args) {
+
+  SessionFactory factory = new Configuration()
+                              .configure("hibernate.cfg.xml")
+                              .addAnnotatedClass( Instructor.class ) // list each related class
+                              .addAnnotatedClass( InstructorDetail.class )
+                              .addAnnotatedClass( Course.class )
+                              .buildSessionFactory();
+
+  // more code
+
+}
+
+```
+
 #### One to Many Unidirectional
 
 ### Many to One Mapping
@@ -284,14 +349,48 @@ private InstructorDetail instructorDetail;
 private InstructorDetail instructorDetail;
 ```
 
-### Lazy Loading
+### Fetch Type
 
-- Lazy loading is about retrieving data that has related entities.
-- "If we retrieve an Instructor", lazy loading asks, "should we also retrieve the Instructor Detail?"
+- Fetch Type is about retrieving data that has related entities.
+  - "If we retrieve an Instructor", Fetch Type asks, "should we also retrieve the Instructor Detail?"
 - `LAZY` retrieves only what's requested.
 - `EAGER` retrieves everything related to the retrieved entity.
+- The best practice in software development is to only load data when it's needed.
+  - Prefer LAZY loading over EAGER in most scenarios!
 
-#### Directionality
+```java
+// lazy
+@OneToMany(fetch = FetchType.LAZY, mappedBy = "instructor")
+private List<Course> courses;
+
+// eager
+@ManyToOne(fetch = FetchType.EAGER, cascade = {
+  CascadeType.DETACH,
+  CascadeType.MERGE,
+  CascadeType.PERSIST,
+  CascadeType.REFRESH
+})
+@JoinColumn(name = "instructor_id")
+private List<Course> courses;
+```
+
+- Each relational annotation has its own default fetch type:
+
+| Annotation  | Fetch Type |
+| ----------- | ---------- |
+| @OneToOne   | EAGER      |
+| @OneToMany  | LAZY       |
+| @ManyToOne  | EAGER      |
+| @ManyToMany | LAZY       |
+
+#### Lazy Loading
+
+- In lazy loading, the primary entity is retrieved, and related entities are only retrieved on demand.
+- However, this "on-demand" loading requires an open Hibernate session.
+  - If the session is closed and you try to retrieve the lazy data, you'll get an exception.
+- You can retrieve lazy data using both the `session.get()` and HQL techniques.
+
+### Directionality
 
 - In loading, there's a concept called directionality.
 - Unidirectional
