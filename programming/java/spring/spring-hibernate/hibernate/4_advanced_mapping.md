@@ -48,7 +48,7 @@
 | Remove    | Removes a managed entity from the database on the next flush/commit.                |
 | Refresh   | Reloads the entity from the database to make sure state isn't stale.                |
 
-![Entity Lifecycle](./entity-lifecycle.png)
+![Entity Lifecycle](./entity-lifcycle.png)
 
 ## Relationships
 
