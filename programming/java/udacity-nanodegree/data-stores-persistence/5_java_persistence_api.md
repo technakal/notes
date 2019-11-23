@@ -303,7 +303,7 @@ public class Author {
   - In a unidirectional relationship, only one entity is aware of the other.
     - Only one entity has a field or property that identifies the relationship.
 
-#### Relational Codepence
+#### Relational Codependence
 
 - Sometimes, relationships are codependent.
   - For example, an OrderItem can't exist without an Order.
@@ -345,6 +345,82 @@ public Set<Order> getOrders() {
 - By default, `FetchType` is set to LAZY.
 - Setting `FetchType to EAGER makes it always return the related entity.
 
+## JPQL
+
+- The Java Persistence API has its own version of the query language.
+- JPQL is very similar to SQL, except it uses the entity object model, rather than database tables, for defining its queries.
+  - This does mean, however, that you have to use something to translate the query to SQL.
+  - Hibernate, or any other JPA implementation, performs this tranformation.
+- JPQL also makes it very portable between data stores, because your Java queries won't change between databases--Hibernate or another implementation will do the translation to the database.
+
+### FROM Clause
+
+- FROM works the same as in SQL, except it points to the Entity, rather than a table.
+
+```java
+SELECT a FROM Author a
+```
+
+### WHERE Clause
+
+- JPQL also has a WHERE clause that is very similar, but only has a subset of SQL options available.
+- Available WHERE options:
+  - Multiple condition operators;
+    - AND, OR, NOT
+  - Comparison operators: 
+    - Equal, not equal, greater than, greater or equal to, less than, less than or equal to, between, like (using % for multiple character wildcard, or _ for single character wildcard), is null, in
+  - Collection operations:
+    - Is empty, size, member of
+
+### SELECT Clause
+
+- The SELECT clause is typically very different in JPQL. 
+- SELECT supports DISTINCT.
+- Though you can select particular data values (fields), you typically select entities instead.
+  - So, instead of retrieving first_name, you retrieve the Author. Then, you use the Author's `getFirstName()` method if you want a particular piece of data.
+- Typically, you'd only use scalar variables (field names) in your SELECT if you want to save on overhead because you're doing "read-only" operations.
+
+#### Constructors
+
+- You can also use constructors within your JPQL.
+- These are more comfortable than scalar variables, but still avoid the overhead of managed entities.
+
+```java
+SELECT new org.thoughts.on.java.model.AuthorValue(a.id, a.firstName, a.lastName) FROM Author a
+```
+
+### JOINs
+
+- You can use JOINs to pull related entities.
+  - It's a bit different. Instead of joining the tables, you're joining entities. 
+  - So, you tell JPQL which field on the primary entity it should pull to get the related entities.
+
+```java
+SELECT a, b
+FROM AUthor a
+JOIN a.books b.
+```
+
+- You can't use JOINs to pull unrelated entities.
+  - Instead, you have to do a theta join and limit it in the WHERE clause.
+
+```java
+SELECT b, p 
+FROM BOOK b, PUBLISHER p
+WHERE 
+  b.fk_publisher = p.id
+```
+
+- You can use LEFT JOIN, additional join criteria, etc.
+
+```java
+// retrieve even authors who have no books
+SELECT a, b FROM Author a
+LEFT JOIN a.books b
+
+// more join conditions
+SELECT a, p FROM Author a JOIN a.publications p ON p.publishingDate > ?1
+```
 ## Getting Started with JPA
 
 - Configure your pom file with necessary dependencies.

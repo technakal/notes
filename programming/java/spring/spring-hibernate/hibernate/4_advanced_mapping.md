@@ -21,6 +21,7 @@
       - [Configuring Cascade Type](#configuring-cascade-type)
     - [Fetch Type](#fetch-type)
       - [Lazy Loading](#lazy-loading)
+        - [Avoiding the Lazy Load Exception](#avoiding-the-lazy-load-exception)
     - [Directionality](#directionality)
 
 <!-- /TOC -->
@@ -283,6 +284,12 @@ public static void main(String[] args) {
 
 #### One to Many Unidirectional
 
+- The main difference between one to many bidirectional and one to many unidirectional
+  - In unidirectional, only one entity knows about the other.
+  - It's like tires on a car. The tires do their job, but they don't need to know to which car they are attached.
+- In our example, only Course konws about Reviews. Reviews don't have any mapping related to Course, though the database is aware of the relationship.
+  - Since Reviews can't exist withou their Course, we define the entire relationship in Course.
+
 ### Many to One Mapping
 
 - Many to one means the left-hand entity can be related to one right-hand entity, but the right-hand entity can be related to multiple left-hand entities.
@@ -300,6 +307,71 @@ public static void main(String[] args) {
   - Each Course can have multiple Students.
 
 ![Many to Many Relationship](./many-to-many.png)
+
+- For many to many relationships, you make use of an intermediary join table.
+  - Both related tables pass their primary keys into the join table, and that intersection defines the relationship.
+
+![Many to Many Databse Structure](./many-to-many-db.png)
+
+- Instead of taking a `@JoinColumn`, the `@ManyToMany` uses a `@JoinTable` annotation.
+  - `@JoinTable` takes a table name, a `joinColumns` value, and an `inverseJoinColumns` value.
+    - name tells which table to look at.
+    - `joinColumns` identifies which columns represent the current entity's identity in the join table.
+    - `inverseJoinColumns` identifies which columns represent the related entity.
+      - The inverse is always the entity that you are not currently in.
+  - In many to many, you define the relationship in each entity.
+
+```java
+// course entity
+@Entity
+@Table(name = "course"
+public class Course {
+
+  // code
+
+  @ManyToMany(cascade = {
+      CascadeType.DETACH,
+      CascadeType.MERGE,
+      CascadeType.PERSIST,
+      CascadeType.REFRESH
+    },
+    fetch = FetchType.LAZY)
+  @JoinTable(
+    name = "course_student",
+    joinColumns=@JoinColumn(name = "course_id"), // this entity's representation
+    inverseJoinColumns=@JoinColumn(name = "student_id") // the "other side's" representation
+  )
+  private List<Student> students;
+
+  // code
+
+}
+
+// student entity
+@Entity
+@Table(name = "student"
+public class Student {
+
+  // code
+
+  @ManyToMany(cascade = {
+      CascadeType.DETACH,
+      CascadeType.MERGE,
+      CascadeType.PERSIST,
+      CascadeType.REFRESH
+    },
+    fetch = FetchType.LAZY)
+  @JoinTable(
+    name = "course_student",
+    joinColumns=@JoinColumn(name = "student_id"), // this entity's representation
+    inverseJoinColumns=@JoinColumn(name = "course_id") // the "other side's" representation
+  )
+  private List<Course> courses;
+
+  // code
+}
+
+```
 
 ## Database Setup
 
@@ -388,11 +460,87 @@ private List<Course> courses;
 - In lazy loading, the primary entity is retrieved, and related entities are only retrieved on demand.
 - However, this "on-demand" loading requires an open Hibernate session.
   - If the session is closed and you try to retrieve the lazy data, you'll get an exception.
-- You can retrieve lazy data using both the `session.get()` and HQL techniques.
+
+##### Avoiding the Lazy Load Exception
+
+- Option 1 - Load into memory before cosing the session.
+  - You can avoid the lazy loading exception by calling the getter method on the lazy data prior to closing the session.
+- Option 2 - Use HQL to retrieve the lazy data.
+
+```java
+public class FetchJoinDemo {
+
+  public static void main(String[] args) {
+
+    // create session factory
+    SessionFactory factory = new Configuration()
+        .configure("hibernate.cfg.xml")
+        .addAnnotatedClass( Instructor.class )
+        .addAnnotatedClass( InstructorDetail.class )
+        .addAnnotatedClass( Course.class )
+        .buildSessionFactory();
+
+    // create session
+    Session session = factory.getCurrentSession();
+
+    // use session
+    try {
+
+      // start transaction
+      session.beginTransaction();
+
+      // get the details
+      int id = 3;
+
+      // set up query
+      Query<Instructor> query = session.createQuery( // make sure Query is from org.hibernate.query.Query
+          "select i from Instructor i " // class name instead of table name
+          + "JOIN FETCH i.courses " // loads courses into memory
+          + "where i.id=:instructorId", // named parameter
+          Instructor.class );
+
+      query.setParameter( "instructorId", id );
+
+      // execute the query
+      Instructor instructor = query.getSingleResult();
+
+      // print things
+      System.out.println( "technakal | Instructor: " + instructor );
+
+      // commit transaction
+      session.getTransaction().commit();
+
+      session.close();
+
+      System.out.println( "technakal | Courses: " + instructor.getCourses() );
+      System.out.println( "technakal | Done!" );
+
+    } catch(Exception exc) {
+
+      exc.printStackTrace();
+
+    } finally {
+
+      // close session
+      session.close();
+
+      // close factory
+      factory.close();
+      System.out.println("technakal | Session closed...");
+
+    }
+
+  }
+
+}
+```
+
+- Option 3 - New Session
+  - You can also just open a new session later in your application and execute an HQL query, using your loaded entity's information as your query parameters.
 
 ### Directionality
 
-- In loading, there's a concept called directionality.
+- In relationships, there's a concept called directionality.
 - Unidirectional
   - In unidirectional, the relationship is defined one way.
   - Loading the owner entity loads the other.
