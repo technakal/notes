@@ -367,14 +367,14 @@ SELECT a FROM Author a
 - Available WHERE options:
   - Multiple condition operators;
     - AND, OR, NOT
-  - Comparison operators: 
-    - Equal, not equal, greater than, greater or equal to, less than, less than or equal to, between, like (using % for multiple character wildcard, or _ for single character wildcard), is null, in
+  - Comparison operators:
+    - Equal, not equal, greater than, greater or equal to, less than, less than or equal to, between, like (using % for multiple character wildcard, or \_ for single character wildcard), is null, in
   - Collection operations:
     - Is empty, size, member of
 
 ### SELECT Clause
 
-- The SELECT clause is typically very different in JPQL. 
+- The SELECT clause is typically very different in JPQL.
 - SELECT supports DISTINCT.
 - Though you can select particular data values (fields), you typically select entities instead.
   - So, instead of retrieving first_name, you retrieve the Author. Then, you use the Author's `getFirstName()` method if you want a particular piece of data.
@@ -392,7 +392,7 @@ SELECT new org.thoughts.on.java.model.AuthorValue(a.id, a.firstName, a.lastName)
 ### JOINs
 
 - You can use JOINs to pull related entities.
-  - It's a bit different. Instead of joining the tables, you're joining entities. 
+  - It's a bit different. Instead of joining the tables, you're joining entities.
   - So, you tell JPQL which field on the primary entity it should pull to get the related entities.
 
 ```java
@@ -405,9 +405,9 @@ JOIN a.books b.
   - Instead, you have to do a theta join and limit it in the WHERE clause.
 
 ```java
-SELECT b, p 
+SELECT b, p
 FROM BOOK b, PUBLISHER p
-WHERE 
+WHERE
   b.fk_publisher = p.id
 ```
 
@@ -421,6 +421,7 @@ LEFT JOIN a.books b
 // more join conditions
 SELECT a, p FROM Author a JOIN a.publications p ON p.publishingDate > ?1
 ```
+
 ## Getting Started with JPA
 
 - Configure your pom file with necessary dependencies.
