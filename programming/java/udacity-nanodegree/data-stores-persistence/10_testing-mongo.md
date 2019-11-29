@@ -19,6 +19,20 @@
 
 - Add JUnit 5 Jupitor to the pom.
 
-```java
-
+```xml
+<dependency>
+  <groupId>org.junit.jupiter</groupId>
+  <artifactId>junit-jupiter-api</artifactId>
+  <version>5.4.2</version>
+  <scope>test</scope>
+</dependency>
+<dependency>
+  <groupId>org.junit.jupiter</groupId>
+  <artifactId>junit-jupiter-engine</artifactId>
+  <version>5.4.2</version>
+  <scope>test</scope>
+</dependency>
 ```
+
+- On your test class, add the `@DataMongoTest`.
+- Add thev `@ExtendWith(SpringExtension.class)` from JUnit.
