@@ -35,4 +35,4 @@
 ```
 
 - On your test class, add the `@DataMongoTest`.
-- Add thev `@ExtendWith(SpringExtension.class)` from JUnit.
+- Add the `@ExtendWith(SpringExtension.class)` from JUnit.
