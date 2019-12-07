@@ -43,10 +43,11 @@ HMACSHA256(
    a. Disable the default security authentication class.
    b. Add `bcrypt`.
 4. Configure your controllers.
-5. Implement an authentication filter to issue JWTS to users sending credentials.
-6. Implement an authorization filter to validate requests containing JWTS.
-7. Create a custom implementation of `UserDetailsService` to help Spring Security loading user-specific data in the framework.
-8. Extend the `WebSecurityConfigurerAdapter` class to customize the security framework to our needs.
+5. Create a `SecurityConstants` class, for use with your filters.
+6. Implement an authentication filter to issue JWTS to users sending credentials.
+7. Implement an authorization filter to validate requests containing JWTS.
+8. Create a custom implementation of `UserDetailsService` to help Spring Security loading user-specific data in the framework.
+9. Extend the `WebSecurityConfigurerAdapter` class to customize the security framework to our needs.
 
 ### Add Dependencies
 
@@ -192,6 +193,173 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         response.addHeader(HEADER_STRING, TOKEN_PREFIX + token);
         super.successfulAuthentication(request, response, chain, authResult);
     }
+}
+```
+
+### Create Security Constants
+
+- Create a file for storing your security constants, used by your filters.
+  - SECRET is used for salting.
+  - EXPIRATION_TIME sets the expiration time of the JWT.
+  - HEADER_STRING is what attribute in the header we'll look for.
+  - TOKEN_PREFIX and SIGN_IN_URL should be pretty obvious.
+
+```java
+public class SecurityConstants {
+
+  public static final String SECRET = "SecretToGenJWTs";
+  public static final long EXPIRATION_TIME = 864_000_000;
+  public static final String TOKEN_PREFIX = "Bearer";
+  public static final String HEADER_STRING = "Authorization";
+  public static final String SIGN_IN_URL = "/users/sign-up";
+
+}
+```
+
+### Create Authorization Filter
+
+- This handles the authorization of the user.
+- It extends the `BasicAuthenticationFilter`, and overrides its `doFilterInternal` method.
+- Basically, it parses the header to make sure it's properly formatted and includes the HEADER_STRING we set in `SecurityConstants`.
+- If it's valid, it checks the user's JWT.
+- If the JWT is valid, it sets the user's `SecurityContext`.
+
+```java
+public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
+
+  public JWTAuthorizationFilter(AuthenticationManager authenticationManager) {
+    super(authenticationManager);
+  }
+
+  @Override
+  protected void doFilterInternal(
+      HttpServletRequest request,
+      HttpServletResponse response,
+      FilterChain chain) throws IOException, ServletException {
+
+    String header = request.getHeader(HEADER_STRING);
+
+    if(header == null || !header.startsWith(TOKEN_PREFIX)) {
+      chain.doFilter(request, response);
+      return;
+    }
+
+    UsernamePasswordAuthenticationToken authentication = getAuthentication(request);
+    SecurityContextHolder.getContext().setAuthentication(authentication);
+    chain.doFilter(request, response);
+
+  }
+
+  private UsernamePasswordAuthenticationToken getAuthentication(HttpServletRequest request) {
+
+    String token = request.getHeader(HEADER_STRING);
+
+    if (token != null) {
+
+      // parse the token
+      String user = JWT.require(Algorithm.HMAC512(SECRET.getBytes()))
+          .build()
+          .verify(token.replace(TOKEN_PREFIX, ""))
+          .getSubject();
+
+      if(user != null) {
+
+        return new UsernamePasswordAuthenticationToken(user, null, new ArrayList<>())
+
+      }
+
+      return null;
+
+    }
+
+    return null;
+
+  }
+}
+```
+
+### Wire Up the Filters
+
+- The next step is to wire the filters up to work with Spring Security's filter chain.
+- We create a class called `WebSecurity`.
+- First, we take advantage of base Spring Security configurations by annotating with `@EnableWebSecurity` and extending `WebSecurityConfigurerAdapter`.
+- From the extended class, we override its `configure` method and its overload. We use these to fine-tune our security settings.
+  - `configure(HttpSecurity http)` defines which resources are public and which are secured. In our case, we set the SIGN_UP_URL endpoint as being public and everything else as being secured. We also configure CORS (Cross-Origin Resource Sharing) support through http.cors() and we add a custom security filter in the Spring Security filter chain.
+  - `configure(AuthenticationManagerBuilder auth)` defines a custom implementation of UserDetailsService to load user-specific data in the security framework. We have also used this method to set the encrypt method used by our application (BCryptPasswordEncoder).
+- We also create a new method, `corsConfigurationSource`.
+  - In this method, we can allow/restrict our CORS support. In our case we left it wide open by permitting requests from any source (/\*\*).
+
+```java
+@EnableWebSecurity
+public class WebSecurity extends WebSecurityConfigurerAdapter {
+
+  private UserDetailsServiceImpl userDetailsService;
+  private BCryptPasswordEncoder bCryptPasswordEncoder;
+
+  public WebSecurity(
+      UserDetailsServiceImpl userDetailsService,
+      BCryptPasswordEncoder bCryptPasswordEncoder
+  ) {
+    this.userDetailsService = userDetailsService;
+    this.bCryptPasswordEncoder = bCryptPasswordEncoder;
+  }
+
+  @Override
+  protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+    auth.userDetailsService(userDetailsService).passwordEncoder(bCryptPasswordEncoder);
+  }
+
+  @Override
+  protected void configure(HttpSecurity http) throws Exception {
+    http.cors().and().csrf().disable().authorizeRequests()
+        .antMatchers(HttpMethod.POST, SIGN_IN_URL).permitAll()
+        .anyRequest().authenticated()
+        .and()
+        .addFilter(new JWTAuthenticationFilter(authenticationManager()))
+        .addFilter(new JWTAuthorizationFilter(authenticationManager()))
+        // disable session creation in Spring Security
+        .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
+  }
+
+  @Bean
+  CorsConfigurationSource corsConfigurationSource() {
+    final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    source.registerCorsConfiguration("/**", new CorsConfiguration().applyPermitDefaultValues());
+    return source;
+  }
+
+}
+```
+
+### Create UserDetailsServiceImpl
+
+- Because Spring Security has no concrete implementation of the `UserDetailsService`, we have to create one.
+  - We throw this in our user folder.
+- In this step, we override the `loadUserByUsername` method.
+  - This method checks if the username matches a user in the database.
+  - If it doesn't, it throws an error.
+  - If it does, it returns that user (which is then used in our other files for authentication/authorization).
+
+```java
+@Service
+public class UserDetailsServiceImpl implements UserDetailsService {
+
+  private ApplicationUserRepository applicationUserRepository;
+
+  public UserDetailsServiceImpl(ApplicationUserRepository applicationUserRepository) {
+    this.applicationUserRepository = applicationUserRepository;
+  }
+
+  @Override
+  public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+
+    ApplicationUser user = applicationUserRepository.findByUsername(username);
+    if(user == null) {
+      throw new UsernameNotFoundException(username);
+    }
+    return new User(user.getUsername(), user.getPassword(), emptyList());
+
+  }
 }
 ```
 
