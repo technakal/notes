@@ -150,8 +150,33 @@ public class SareetaApplication {
     - `successfulAuthentication` - builds a JWT from the user's credentials and returns them to the user as a repsonse header.
 
 ```java
-public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
+package com.auth0.samples.authapi.springbootauthupdated.security;
 
+import com.auth0.jwt.JWT;
+import com.auth0.samples.authapi.springbootauthupdated.user.ApplicationUser;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Date;
+
+import static com.auth0.jwt.algorithms.Algorithm.HMAC512;
+import static com.auth0.samples.authapi.springbootauthupdated.security.SecurityConstants.EXPIRATION_TIME;
+import static com.auth0.samples.authapi.springbootauthupdated.security.SecurityConstants.HEADER_STRING;
+import static com.auth0.samples.authapi.springbootauthupdated.security.SecurityConstants.SECRET;
+import static com.auth0.samples.authapi.springbootauthupdated.security.SecurityConstants.TOKEN_PREFIX;
+
+public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
     private AuthenticationManager authenticationManager;
 
     public JWTAuthenticationFilter(AuthenticationManager authenticationManager) {
@@ -159,39 +184,34 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
     }
 
     @Override
-    public Authentication attemptAuthentication(
-            HttpServletRequest request,
-            HttpServletResponse response) throws AuthenticationException {
-
+    public Authentication attemptAuthentication(HttpServletRequest req,
+                                                HttpServletResponse res) throws AuthenticationException {
         try {
             ApplicationUser creds = new ObjectMapper()
-                    .readValue(request.getInputStream(), ApplicationUser.class);
+                    .readValue(req.getInputStream(), ApplicationUser.class);
+
             return authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
                             creds.getUsername(),
                             creds.getPassword(),
-                            new ArrayList<>()
-                    )
+                            new ArrayList<>())
             );
-        } catch(IOException e) {
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
-
     }
 
     @Override
-    protected void successfulAuthentication(
-            HttpServletRequest request,
-            HttpServletResponse response,
-            FilterChain chain,
-            Authentication authResult) throws IOException, ServletException {
+    protected void successfulAuthentication(HttpServletRequest req,
+                                            HttpServletResponse res,
+                                            FilterChain chain,
+                                            Authentication auth) throws IOException, ServletException {
 
         String token = JWT.create()
-                .withSubject(((ApplicationUser) authResult.getPrincipal()).getUsername())
+                .withSubject(((User) auth.getPrincipal()).getUsername())
                 .withExpiresAt(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
-                .sign(Algorithm.HMAC512(SECRET.getBytes()));
-        response.addHeader(HEADER_STRING, TOKEN_PREFIX + token);
-        super.successfulAuthentication(request, response, chain, authResult);
+                .sign(HMAC512(SECRET.getBytes()));
+        res.addHeader(HEADER_STRING, TOKEN_PREFIX + token);
     }
 }
 ```
@@ -206,13 +226,11 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 
 ```java
 public class SecurityConstants {
-
-  public static final String SECRET = "SecretToGenJWTs";
-  public static final long EXPIRATION_TIME = 864_000_000;
-  public static final String TOKEN_PREFIX = "Bearer";
+  public static final String SECRET = "SecretKeyToGenJWTs";
+  public static final long EXPIRATION_TIME = 864_000_000; // 10 days
+  public static final String TOKEN_PREFIX = "Bearer ";
   public static final String HEADER_STRING = "Authorization";
-  public static final String SIGN_IN_URL = "/users/sign-up";
-
+  public static final String SIGN_UP_URL = "/users/sign-up";
 }
 ```
 
@@ -225,56 +243,63 @@ public class SecurityConstants {
 - If the JWT is valid, it sets the user's `SecurityContext`.
 
 ```java
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.algorithms.Algorithm;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
+
+import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.ArrayList;
+
+import static com.auth0.samples.authapi.springbootauthupdated.security.SecurityConstants.HEADER_STRING;
+import static com.auth0.samples.authapi.springbootauthupdated.security.SecurityConstants.SECRET;
+import static com.auth0.samples.authapi.springbootauthupdated.security.SecurityConstants.TOKEN_PREFIX;
+
 public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
 
-  public JWTAuthorizationFilter(AuthenticationManager authenticationManager) {
-    super(authenticationManager);
-  }
-
-  @Override
-  protected void doFilterInternal(
-      HttpServletRequest request,
-      HttpServletResponse response,
-      FilterChain chain) throws IOException, ServletException {
-
-    String header = request.getHeader(HEADER_STRING);
-
-    if(header == null || !header.startsWith(TOKEN_PREFIX)) {
-      chain.doFilter(request, response);
-      return;
+    public JWTAuthorizationFilter(AuthenticationManager authManager) {
+        super(authManager);
     }
 
-    UsernamePasswordAuthenticationToken authentication = getAuthentication(request);
-    SecurityContextHolder.getContext().setAuthentication(authentication);
-    chain.doFilter(request, response);
+    @Override
+    protected void doFilterInternal(HttpServletRequest req,
+                                    HttpServletResponse res,
+                                    FilterChain chain) throws IOException, ServletException {
+        String header = req.getHeader(HEADER_STRING);
 
-  }
+        if (header == null || !header.startsWith(TOKEN_PREFIX)) {
+            chain.doFilter(req, res);
+            return;
+        }
 
-  private UsernamePasswordAuthenticationToken getAuthentication(HttpServletRequest request) {
+        UsernamePasswordAuthenticationToken authentication = getAuthentication(req);
 
-    String token = request.getHeader(HEADER_STRING);
-
-    if (token != null) {
-
-      // parse the token
-      String user = JWT.require(Algorithm.HMAC512(SECRET.getBytes()))
-          .build()
-          .verify(token.replace(TOKEN_PREFIX, ""))
-          .getSubject();
-
-      if(user != null) {
-
-        return new UsernamePasswordAuthenticationToken(user, null, new ArrayList<>())
-
-      }
-
-      return null;
-
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        chain.doFilter(req, res);
     }
 
-    return null;
+    private UsernamePasswordAuthenticationToken getAuthentication(HttpServletRequest request) {
+        String token = request.getHeader(HEADER_STRING);
+        if (token != null) {
+            // parse the token.
+            String user = JWT.require(Algorithm.HMAC512(SECRET.getBytes()))
+                    .build()
+                    .verify(token.replace(TOKEN_PREFIX, ""))
+                    .getSubject();
 
-  }
+            if (user != null) {
+                return new UsernamePasswordAuthenticationToken(user, null, new ArrayList<>());
+            }
+            return null;
+        }
+        return null;
+    }
 }
 ```
 
@@ -290,44 +315,54 @@ public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
   - In this method, we can allow/restrict our CORS support. In our case we left it wide open by permitting requests from any source (/\*\*).
 
 ```java
+import org.springframework.http.HttpMethod;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import com.auth0.samples.authapi.springbootauthupdated.user.UserDetailsServiceImpl;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.context.annotation.Bean;
+
+import static com.auth0.samples.authapi.springbootauthupdated.security.SecurityConstants.SIGN_UP_URL;
+
 @EnableWebSecurity
 public class WebSecurity extends WebSecurityConfigurerAdapter {
+    private UserDetailsServiceImpl userDetailsService;
+    private BCryptPasswordEncoder bCryptPasswordEncoder;
 
-  private UserDetailsServiceImpl userDetailsService;
-  private BCryptPasswordEncoder bCryptPasswordEncoder;
+    public WebSecurity(UserDetailsServiceImpl userDetailsService, BCryptPasswordEncoder bCryptPasswordEncoder) {
+        this.userDetailsService = userDetailsService;
+        this.bCryptPasswordEncoder = bCryptPasswordEncoder;
+    }
 
-  public WebSecurity(
-      UserDetailsServiceImpl userDetailsService,
-      BCryptPasswordEncoder bCryptPasswordEncoder
-  ) {
-    this.userDetailsService = userDetailsService;
-    this.bCryptPasswordEncoder = bCryptPasswordEncoder;
-  }
+    @Override
+    protected void configure(HttpSecurity http) throws Exception {
+        http.cors().and().csrf().disable().authorizeRequests()
+                .antMatchers(HttpMethod.POST, SIGN_UP_URL).permitAll()
+                .anyRequest().authenticated()
+                .and()
+                .addFilter(new JWTAuthenticationFilter(authenticationManager()))
+                .addFilter(new JWTAuthorizationFilter(authenticationManager()))
+                // this disables session creation on Spring Security
+                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
+    }
 
-  @Override
-  protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-    auth.userDetailsService(userDetailsService).passwordEncoder(bCryptPasswordEncoder);
-  }
+    @Override
+    public void configure(AuthenticationManagerBuilder auth) throws Exception {
+        auth.userDetailsService(userDetailsService).passwordEncoder(bCryptPasswordEncoder);
+    }
 
-  @Override
-  protected void configure(HttpSecurity http) throws Exception {
-    http.cors().and().csrf().disable().authorizeRequests()
-        .antMatchers(HttpMethod.POST, SIGN_IN_URL).permitAll()
-        .anyRequest().authenticated()
-        .and()
-        .addFilter(new JWTAuthenticationFilter(authenticationManager()))
-        .addFilter(new JWTAuthorizationFilter(authenticationManager()))
-        // disable session creation in Spring Security
-        .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
-  }
-
-  @Bean
-  CorsConfigurationSource corsConfigurationSource() {
-    final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-    source.registerCorsConfiguration("/**", new CorsConfiguration().applyPermitDefaultValues());
-    return source;
-  }
-
+    @Bean
+    CorsConfigurationSource corsConfigurationSource() {
+        final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", new CorsConfiguration().applyPermitDefaultValues());
+        return source;
+    }
 }
 ```
 
@@ -341,25 +376,30 @@ public class WebSecurity extends WebSecurityConfigurerAdapter {
   - If it does, it returns that user (which is then used in our other files for authentication/authorization).
 
 ```java
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.stereotype.Service;
+
+import static java.util.Collections.emptyList;
+
 @Service
 public class UserDetailsServiceImpl implements UserDetailsService {
+    private ApplicationUserRepository applicationUserRepository;
 
-  private ApplicationUserRepository applicationUserRepository;
-
-  public UserDetailsServiceImpl(ApplicationUserRepository applicationUserRepository) {
-    this.applicationUserRepository = applicationUserRepository;
-  }
-
-  @Override
-  public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-
-    ApplicationUser user = applicationUserRepository.findByUsername(username);
-    if(user == null) {
-      throw new UsernameNotFoundException(username);
+    public UserDetailsServiceImpl(ApplicationUserRepository applicationUserRepository) {
+        this.applicationUserRepository = applicationUserRepository;
     }
-    return new User(user.getUsername(), user.getPassword(), emptyList());
 
-  }
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        ApplicationUser applicationUser = applicationUserRepository.findByUsername(username);
+        if (applicationUser == null) {
+            throw new UsernameNotFoundException(username);
+        }
+        return new User(applicationUser.getUsername(), applicationUser.getPassword(), emptyList());
+    }
 }
 ```
 
