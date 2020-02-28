@@ -13,10 +13,7 @@
   - Below, `generatedFunc` stores the result of `funcFactory`--that is, it stores the returned function, formerly known as `multiplyBy2`. However, `generatedFunc`, after the resolution of `funcFactory` doesn't know anything about `funcFactory`. It has no relationship with the function that returned its present value.
 
 ```js
-<<<<<<< HEAD
 // this is not a closure, but it's on the road to closures.
-=======
->>>>>>> 32e6ce97ca7c4d0dc406ebf638b143daf4b83b1a
 function funcFactory() {
   function multiplyBy2(num) {
     return num * 2;
@@ -27,11 +24,17 @@ function funcFactory() {
 const generatedFunc = funcFactory();
 const result = generatedFunc(2);
 ```
-<<<<<<< HEAD
 
-## Nested Function Scope
+## Retaining Function Memory
 
--
+- When you return a function from within a function, it brings with it all of the surrounding data from where it was saved, like a little backpack.
+  - Function definitions that are returned from other functions get a hidden property called `[scope]`, which links to the place in memory where the surrounding data is stored.
+  - This "backpack" of memory has a few names:
+    - The advanced name is the Persistent Lexical Scope Referenced Data (PLSRD).
+    - Others call it the Closed Over Variable Environment (COVE).
+    - The official name is the Closure, which is unfortunate because this is also the name of the thing that produces the backpack. It's the name for both the backpack and the thing that creates the backpack. Ucky.
+    - I'm just gonna call it the Backpack.
+  - Backpacks are independent for each unique instantiation of the closure. However, shared closures... uh... share backpacks.
 
 ```js
 function outer() {
@@ -42,7 +45,42 @@ function outer() {
   return incrementCounter();
 }
 
-outer();
+const myNewFunction = outer(); // incrementCounter { counter++ }
+myNewFunction(); // counter++
+myNewFunction(); // counter++
 ```
-=======
->>>>>>> 32e6ce97ca7c4d0dc406ebf638b143daf4b83b1a
+
+- You can also chain inner scopes. So, if a function returns a function that returns a function, each further nested function has access to its papa's context.
+- Also, you can pass functions into functions, and the function you pass into will have the parameter function's context.
+  - This enables partial application, currying, and function decorations.
+
+## Practical Applications
+
+- Helper functions like once and memoize become possible.
+
+```js
+function once() {
+  const run = false;
+  const counter = 0;
+  return incrementCounter() {
+    if(run === false ) {
+      counter++;
+      return counter;
+    } else {
+      return 'This can only be run once.';
+    }
+  }
+}
+
+function nthPrime(arg) {
+  const memoization = {}
+  if(memoization.hasOwnProperty(arg)) {
+    return memoization[arg];
+  }
+  return () => {...}
+}
+```
+
+- Iterators and generators - modern JavaScript data handling patterns become possible.
+- Module pattern - preserve application state without pollution global context.
+- Asynchronous JavaScript - Callbacks and promises require closures to persist state.
