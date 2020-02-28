@@ -13,7 +13,10 @@
   - Below, `generatedFunc` stores the result of `funcFactory`--that is, it stores the returned function, formerly known as `multiplyBy2`. However, `generatedFunc`, after the resolution of `funcFactory` doesn't know anything about `funcFactory`. It has no relationship with the function that returned its present value.
 
 ```js
+<<<<<<< HEAD
 // this is not a closure, but it's on the road to closures.
+=======
+>>>>>>> 32e6ce97ca7c4d0dc406ebf638b143daf4b83b1a
 function funcFactory() {
   function multiplyBy2(num) {
     return num * 2;
@@ -24,6 +27,7 @@ function funcFactory() {
 const generatedFunc = funcFactory();
 const result = generatedFunc(2);
 ```
+<<<<<<< HEAD
 
 ## Nested Function Scope
 
@@ -40,3 +44,5 @@ function outer() {
 
 outer();
 ```
+=======
+>>>>>>> 32e6ce97ca7c4d0dc406ebf638b143daf4b83b1a
