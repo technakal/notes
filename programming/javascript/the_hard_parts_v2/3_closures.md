@@ -73,7 +73,7 @@ function once() {
 }
 
 function nthPrime(arg) {
-  const memoization = {}
+  const memoizedPrimes = {}
   if(memoization.hasOwnProperty(arg)) {
     return memoization[arg];
   }
