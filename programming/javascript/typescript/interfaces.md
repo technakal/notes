@@ -16,31 +16,31 @@
 ### The Problem
 
 - Without interfaces, your code might look something like this:
-  - Within the parameters, we're defining a todo type, which has a `string` title and `string` text.
+  - Within the parameters, we're defining a TODO type, which has a `string` title and `string` text.
 
 ```typescript
-const showTodo = (todo: { title: string; text: string }): void => {
-  console.log(`${todo.title}: ${todo.text}`);
+const showTODO = (TODO: { title: string; text: string }): void => {
+  console.log(`${TODO.title}: ${TODO.text}`);
 };
 ```
 
 ### Interfaces -- The Solution
 
-- Interfaces allow us to clean up this mess by defining the shape of that todo elsewhere.
+- Interfaces allow us to clean up this mess by defining the shape of that TODO elsewhere.
 - We create an interface in a similar way to creating a custom type.
   - We define the composition of the interface--what it must include to exist.
 
 ```typescript
-interface Todo {
+interface TODO {
   title: string;
   text: string;
 }
 
-function showTodo(todo: Todo): void {
-  console.log(`${todo.title}: ${todo.text}`);
+function showTODO(TODO: TODO): void {
+  console.log(`${TODO.title}: ${TODO.text}`);
 }
 
-const myTodo: Todo = {
+const myTODO: TODO = {
   title: 'Code some stuff',
   text: 'Make the next best thing.',
 };

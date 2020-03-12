@@ -26,13 +26,13 @@ FROM mcr.microsoft.com/dotnet/core/sdk:3.0.100 AS builder
 
 WORKDIR src/
 COPY src/ .
-RUN dotnet publish -c Release -o /out ToDoList.csproj
+RUN dotnet publish -c Release -o /out TODOList.csproj
 
 # app image
 FROM mcr.microsoft.com/dotnet/core/aspnet:3.0
 
 WORKDIR /app
-ENTRYPOINT ["dotnet", "ToDoList.dll"]
+ENTRYPOINT ["dotnet", "TODOList.dll"]
 
 COPY --from=builder /out/ .
 ```
