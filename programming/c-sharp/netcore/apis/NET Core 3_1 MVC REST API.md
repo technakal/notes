@@ -344,10 +344,214 @@ public class CommandsController : ControllerBase
 
 ### POST
 
+- To add a post route, you need to update your repository interface, your repository implementations, your controllers, and likely add some Dtos.
+
+#### Repository
+
+- Each repository interface, if it's going to allow posting, needs a method related to creating the new resource.
+- Each repository also needs a `SaveChanges` method to persist the changes to the database.
+
+```cs
+public bool SaveChanges()
+{
+  return (_context.SaveChanges() >= 0);
+}
+```
+
+- For posting your data, you can use the context's Add command.
+
+```cs
+public void CreatePerson(Person person)
+{
+  if(person == null)
+  {
+    throw new System.ArgumentNullException(nameof(person));
+  }
+  _context.Persons.Add(person);
+}
+```
+
+#### DbContext
+
+- Through inheritance, the DbContext already has methods for saving changes and adding new resources.
+  - `SaveChanges` and `Add`, if you can imagine.
+  - So, for these sorts of normal actions, you don't need to do anything to your DbContext.
+
+#### Create Dto
+
+- You'll want to create a Dto for the purpose of creating a new resource.
+- It shouldn't include fields that are auto-populated by the database--such as an Id.
+- It should include data attributes to control fields.
+  - If you fail to do this and the user submits an incomplete request, it'll return a 500 server error instead of a 400 bad request.
+
+```cs
+using System.ComponentModel.DataAnnotations;
+
+namespace Person.API.Dtos
+{
+  public class PersonForCreationDto
+  {
+    [Required]
+    [MaxLength(250)]
+    public string FirstName { get; set; }
+    [Required]
+    public string LastName { get; set; }
+    [Required]
+    public DateTimeOffset DateOfBirth { get; set; }
+
+  }
+}
+```
+
+#### Profile
+
+- Along with the new Dto, we need to update our profile mapping to recognize this new mapping.
+
+```cs
+CreateMap<PersonForCreationDto, Person>();
+```
+
+#### Controller
+
+- In the controller, you'll have to add a route for the create, using the `HttpPost` decorator.
+- Don't forget to return the `CreatedAtRoute` object.
+  - In order for this to work, you'll have to give the related route a nickname.
+  - [Documentation](https://docs.microsoft.com/en-us/dotnet/api/system.web.http.apicontroller.createdatroute?view=aspnetcore-2.2)
+
+```cs
+[HttpGet("{id}", Name="GetPersonById")] // here's the nickname
+// ... get method
+
+[HttpPost]
+public ActionResult<CommandDto> CreateCommand(CommandForCreationDto commandForCreation)
+{
+  var commandModel = _mapper.Map<Command>(commandForCreation);
+  _repository.CreateCommand(commandModel);
+  _repository.SaveChanges();
+  var commandDto = _mapper.Map<CommandDto>(commandModel);
+  return CreatedAtRoute(
+    nameof(GetCommandById), // get route nickname
+    new { id = commandDto.Id }, // get route parameters
+    commandDto
+  );
+}
+```
+
 ## Coding Part IV
 
 ### PUT
 
+#### Repository
+
+- Add the update method to your interface and implementations.
+  - Because of the way DbContexts work, you don't actually have to add content to your implementation for update. Just implement an empty method for it.
+
+#### Dtos
+
+- Create a Dto for the update process.
+
+#### Profile
+
+- Add mapping from your Dto to your model.
+
+#### Controller
+
+- Create your `[HttpPut]` method.
+
+```cs
+[HttpPut("{id}")]
+public IActionResult UpdateCommand(int id, CommandForUpdateDto commandForUpdate)
+{
+  var commandModelFromRepo = _repository.GetCommandById(id);
+  if (commandModelFromRepo == null) return NotFound();
+  _mapper.Map(commandForUpdate, commandModelFromRepo); // this actually calls the update method...
+  _repository.UpdateCommand(commandModelFromRepo); // ... but we still call update explicitly so that if we ever change implementations, our system doesn't break.
+  _repository.SaveChanges();
+  return NoContent();
+}
+```
+
 ### PATCH
 
+- In order to use patch in .NET, we need to add some packages.
+  - Microsoft.AspNetCore.JsonPatch
+  - Microsoft.AspNetCore.Mvc.NewtonsoftJson
+- In addition, we need to update the `Startup` class to use the Newtonsoft package.
+  - In ConfigureServices, we need to add NewtonsoftJson and configure it to handle contracts.
+
+```cs
+services.AddControllers().AddNewtonsoftJson(s =>
+{
+  s.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver();
+});
+```
+
+#### Profiles
+
+- We need to add a mapping from our model to our update Dto.
+
+```cs
+CreateMap<Person, PersonForUpdateDto>();
+```
+
+#### Controller
+
+- Here, we have to do a number of things.
+  - Create the route using the `[HttpPatch]` decorator.
+  - The route should take an id and the patchDoc.
+  - We check if the resource exists.
+  - We map the resource from the database to an update Dto.
+  - We apply the patchDoc to the update Dto.
+  - We make sure the patch applied successfully using `ModelState`.
+  - We map the update Dto to the model.
+  - We update the resource and save.
+
+```cs
+[HttpPatch("{id}")]
+public IActionResult PartialUpdateCommand(int id, JsonPatchDocument<CommandForUpdateDto> patchDoc)
+{
+  var commandModelFromRepo = _repository.GetCommandById(id);
+  if (commandModelFromRepo == null) return NotFound();
+  var commandToPatch = _mapper.Map<CommandForUpdateDto>(commandModelFromRepo);
+  patchDoc.ApplyTo(commandToPatch, ModelState);
+  if (!TryValidateModel(commandToPatch)) return ValidationProblem(ModelState);
+  _mapper.Map(commandToPatch, commandModelFromRepo);
+  _repository.UpdateCommand(commandModelFromRepo);
+  _repository.SaveChanges();
+  return NoContent();
+}
+```
+
 ### DELETE
+
+- Add delete method to repository interface and implementations.
+
+```cs
+// implementation
+public void DeleteCommand(Command cmd)
+{
+  if (cmd == null)
+  {
+    throw new System.ArgumentNullException(nameof(cmd));
+  }
+  _context.Commands.Remove(cmd);
+}
+```
+
+- Add delete route, denoted by `[HttpDelete]` decorator.
+  - Check if the resource exists.
+  - If exists, simply pass the resource from the repository into the DeleteCommand method.
+  - Save changes.
+  - Return.
+
+```cs
+[HttpDelete("{id}")]
+public IActionResult DeleteCommand(int id)
+{
+  var commandModelFromRepo = _repository.GetCommandById(id);
+  if (commandModelFromRepo == null) return NotFound();
+  _repository.DeleteCommand(commandModelFromRepo);
+  _repository.SaveChanges();
+  return NoContent();
+}
+```
